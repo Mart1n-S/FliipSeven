@@ -24,9 +24,12 @@ export interface ActionCard {
 export type Card = NumberCard | ModifierCard | ActionCard
 
 /**
- * Narrowed type for the Second Chance action card, useful when
- * storing it as a single slot on a player's row.
+ * Narrowed types for each action card variant.
+ * They allow APIs to require a specific action (eg. only a Freeze
+ * card can be passed to applyFreeze) and to be checked at compile time.
  */
+export type FreezeCard = ActionCard & { readonly action: 'freeze' }
+export type FlipThreeCard = ActionCard & { readonly action: 'flip-three' }
 export type SecondChanceCard = ActionCard & { readonly action: 'second-chance' }
 
 export function isNumberCard(card: Card): card is NumberCard {
@@ -39,6 +42,14 @@ export function isModifierCard(card: Card): card is ModifierCard {
 
 export function isActionCard(card: Card): card is ActionCard {
   return card.kind === 'action'
+}
+
+export function isFreezeCard(card: Card): card is FreezeCard {
+  return card.kind === 'action' && card.action === 'freeze'
+}
+
+export function isFlipThreeCard(card: Card): card is FlipThreeCard {
+  return card.kind === 'action' && card.action === 'flip-three'
 }
 
 export function isSecondChanceCard(card: Card): card is SecondChanceCard {
