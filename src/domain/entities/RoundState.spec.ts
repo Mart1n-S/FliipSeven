@@ -3,6 +3,7 @@ import { createPlayerRoundState, type PlayerRoundState } from '@/domain/entities
 import {
   hasActivePlayers,
   nextActivePlayerIndex,
+  shouldEndRound,
   type RoundState,
 } from '@/domain/entities/RoundState'
 import { createPlayerId } from '@/domain/value-objects/PlayerId'
@@ -23,6 +24,20 @@ describe('hasActivePlayers', () => {
 
   it('is false once everyone is out of the round', () => {
     expect(hasActivePlayers(makeRound(['busted', 'stayed', 'frozen', 'flip7']))).toBe(false)
+  })
+})
+
+describe('shouldEndRound', () => {
+  it('is true as soon as a player reached Flip 7', () => {
+    expect(shouldEndRound(makeRound(['active', 'flip7', 'active']))).toBe(true)
+  })
+
+  it('is true when no player is active anymore', () => {
+    expect(shouldEndRound(makeRound(['stayed', 'busted', 'frozen']))).toBe(true)
+  })
+
+  it('is false while at least one player is still active and nobody hit Flip 7', () => {
+    expect(shouldEndRound(makeRound(['active', 'stayed', 'busted']))).toBe(false)
   })
 })
 

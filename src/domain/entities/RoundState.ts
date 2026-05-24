@@ -18,6 +18,16 @@ export function hasActivePlayers(round: RoundState): boolean {
 }
 
 /**
+ * A round must end as soon as either:
+ *  - someone has reached Flip 7 (immediate end), or
+ *  - no player is `active` anymore (everyone stayed, busted or got frozen).
+ */
+export function shouldEndRound(round: RoundState): boolean {
+  if (round.playerStates.some((s) => s.status === 'flip7')) return true
+  return !hasActivePlayers(round)
+}
+
+/**
  * Find the next player whose status is `active`, walking the rotation
  * starting **after** `fromIndex`. Returns `null` when no other player
  * is still active (the round should then be ended).
