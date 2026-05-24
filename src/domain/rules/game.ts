@@ -63,6 +63,9 @@ export function createGame(pseudos: readonly string[], deck: readonly Card[]): G
     round: null,
     phase: 'setup',
     roundNumber: 0,
+    pendingAction: null,
+    forcedDraws: null,
+    actionQueue: [],
   }
 }
 

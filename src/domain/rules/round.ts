@@ -30,6 +30,9 @@ export function startRound(game: GameState): GameState {
     round,
     phase: 'in-round',
     roundNumber: game.roundNumber + 1,
+    pendingAction: null,
+    forcedDraws: null,
+    actionQueue: [],
   }
 }
 
@@ -79,5 +82,8 @@ export function endRound(game: GameState): GameState {
     round: null,
     phase: newPhase,
     dealerIndex: newDealerIndex,
+    pendingAction: null,
+    forcedDraws: null,
+    actionQueue: [],
   }
 }
