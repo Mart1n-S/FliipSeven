@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: 'Flip 7',
         short_name: 'Flip 7',
-        description: 'Le jeu de cartes Flip 7 — version web responsive',
+        description: 'Le jeu de cartes Flip 7 - version web responsive',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

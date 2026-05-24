@@ -8,7 +8,7 @@ import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
  * (when the recipient already had one and chose to pass it on).
  *
  * @throws if the target is not active.
- * @throws if the target already holds a Second Chance card —
+ * @throws if the target already holds a Second Chance card -
  *         the caller (use-case layer) must redirect or discard
  *         the card before reaching this function.
  */

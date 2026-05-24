@@ -7,7 +7,7 @@ import type { GamePhase } from '@/domain/value-objects/GamePhase'
  * Top-level immutable snapshot of a game.
  *
  * Every transition (start round, draw, stay, end round, …) returns a
- * brand new GameState — the previous one is never mutated. This is
+ * brand new GameState - the previous one is never mutated. This is
  * what makes the domain safe to feed into Pinia, easy to persist, and
  * trivial to time-travel for debugging.
  */

@@ -14,7 +14,7 @@
     "lint:fix": "eslint . --ext .ts,.vue --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\"",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc -b --force"
   },
   "dependencies": {
     "@vueuse/core": "^14.3.0",

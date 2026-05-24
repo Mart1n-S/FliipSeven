@@ -6,7 +6,7 @@
   <main class="flex min-h-full flex-col items-center justify-center gap-8 p-6">
     <header class="text-center">
       <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">Flip 7</h1>
-      <p class="mt-3 text-slate-400">Le jeu de cartes — version web</p>
+      <p class="mt-3 text-slate-400">Le jeu de cartes - version web</p>
     </header>
 
     <button
@@ -17,6 +17,6 @@
       Nouvelle partie
     </button>
 
-    <p class="text-sm text-slate-500">V1 — bientôt jouable</p>
+    <p class="text-sm text-slate-500">V1 - bientôt jouable</p>
   </main>
 </template>

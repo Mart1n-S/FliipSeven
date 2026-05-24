@@ -20,7 +20,7 @@ export interface FlipThreeAtomicOutcome {
 /**
  * Atomic effect of a Flip Three card: the card is discarded and the
  * target must accept 3 additional draws. The target state itself is
- * unchanged at this stage — the actual draws are produced by
+ * unchanged at this stage - the actual draws are produced by
  * {@link runFlipThreeDraws}.
  *
  * @throws if the target is not active.

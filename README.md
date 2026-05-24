@@ -39,6 +39,6 @@ npm run format       # Formater le code
 npm run typecheck    # Vérification des types
 ```
 
-## V1 — Fonctionnement
+## V1 - Fonctionnement
 
 Un seul téléphone, un seul gestionnaire de partie : on saisit les joueurs, puis on enchaîne les manches. L'app gère la pioche, les cartes spéciales, le scoring et la fin de partie.

@@ -46,7 +46,7 @@ function validatePseudos(pseudos: readonly string[]): readonly string[] {
 /**
  * Build a fresh GameState from a list of pseudos and a (typically
  * shuffled) deck. The first dealer is the first player; the phase
- * starts at `setup` — call {@link startRound} to actually start playing.
+ * starts at `setup` - call {@link startRound} to actually start playing.
  */
 export function createGame(pseudos: readonly string[], deck: readonly Card[]): GameState {
   const cleanedPseudos = validatePseudos(pseudos)

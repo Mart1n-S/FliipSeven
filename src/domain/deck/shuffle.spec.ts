@@ -4,8 +4,11 @@ import { shuffle } from '@/domain/deck/shuffle'
 
 class FixedSequenceRandomProvider implements RandomProvider {
   private cursor = 0
+  private readonly sequence: readonly number[]
 
-  constructor(private readonly sequence: readonly number[]) {}
+  constructor(sequence: readonly number[]) {
+    this.sequence = sequence
+  }
 
   nextInt(maxExclusive: number): number {
     const raw = this.sequence[this.cursor]
@@ -18,7 +21,11 @@ class FixedSequenceRandomProvider implements RandomProvider {
 }
 
 class ConstantRandomProvider implements RandomProvider {
-  constructor(private readonly value: number) {}
+  private readonly value: number
+
+  constructor(value: number) {
+    this.value = value
+  }
 
   nextInt(maxExclusive: number): number {
     return this.value % maxExclusive
