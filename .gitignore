@@ -28,6 +28,10 @@ coverage
 !.vscode/settings.json
 .idea
 .claude/
+
+# Local working docs (not committed)
+plan.md
+
 .DS_Store
 *.suo
 *.ntvs*
