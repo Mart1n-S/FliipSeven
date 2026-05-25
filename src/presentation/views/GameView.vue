@@ -8,6 +8,8 @@ import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
 import TargetSelectorModal from '@/presentation/components/TargetSelectorModal.vue'
 import { useActionResolution } from '@/presentation/composables/useActionResolution'
 import { useGame } from '@/presentation/composables/useGame'
+import GameEndView from '@/presentation/views/GameEndView.vue'
+import RoundEndView from '@/presentation/views/RoundEndView.vue'
 
 const router = useRouter()
 const {
@@ -22,6 +24,7 @@ const {
   dealer,
   lastDrawnCardId,
   lastEvent,
+  lastRoundScores,
   draw,
   stay,
   resolve,
@@ -88,52 +91,15 @@ function quit() {
     </section>
 
     <!-- Between rounds -->
-    <section v-else-if="isBetweenRounds" class="flex flex-1 flex-col gap-4 px-4 py-6">
-      <h2 class="text-xl font-bold">Manche {{ game.roundNumber }} terminée</h2>
-      <ul class="flex flex-col gap-2">
-        <li
-          v-for="player in game.players"
-          :key="player.id"
-          class="flex items-center justify-between rounded-lg bg-slate-800 px-4 py-3"
-        >
-          <span class="font-medium">{{ player.pseudo }}</span>
-          <span class="font-mono text-indigo-300 tabular-nums"> {{ player.totalScore }} pts </span>
-        </li>
-      </ul>
-      <button
-        type="button"
-        class="mt-auto w-full rounded-xl bg-indigo-500 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
-        @click="startNextRound"
-      >
-        Manche suivante
-      </button>
-    </section>
+    <RoundEndView
+      v-else-if="isBetweenRounds"
+      :game="game"
+      :round-scores="lastRoundScores"
+      @next="startNextRound"
+    />
 
     <!-- Finished -->
-    <section v-else-if="isFinished" class="flex flex-1 flex-col gap-4 px-4 py-6">
-      <h2 class="text-2xl font-bold text-amber-300">Partie terminée !</h2>
-      <ul class="flex flex-col gap-2">
-        <li
-          v-for="(player, idx) in [...game.players].sort((a, b) => b.totalScore - a.totalScore)"
-          :key="player.id"
-          class="flex items-center justify-between rounded-lg bg-slate-800 px-4 py-3"
-          :class="idx === 0 ? 'ring-2 ring-amber-400' : ''"
-        >
-          <span class="font-medium">
-            <span class="mr-2 text-slate-500">#{{ idx + 1 }}</span>
-            {{ player.pseudo }}
-          </span>
-          <span class="font-mono text-indigo-300 tabular-nums"> {{ player.totalScore }} pts </span>
-        </li>
-      </ul>
-      <button
-        type="button"
-        class="mt-auto w-full rounded-xl bg-indigo-500 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
-        @click="quit"
-      >
-        Rejouer
-      </button>
-    </section>
+    <GameEndView v-else-if="isFinished" :game="game" @replay="quit" />
 
     <ActionBar
       v-if="showActionBar"

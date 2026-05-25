@@ -171,6 +171,30 @@ describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
     expect(store.lastDrawnCardId).toBeNull()
     expect(store.lastEvent).toBeNull()
   })
+
+  it('lastRoundScores snapshots per-player round totals when a round ends', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.stay()
+    store.stay() // both stayed -> round auto-ends
+
+    expect(store.lastRoundScores).not.toBeNull()
+    expect(store.lastRoundScores).toHaveLength(2)
+    // Both players stayed without drawing, so their round score is 0.
+    expect(store.lastRoundScores).toEqual([0, 0])
+  })
+
+  it('startNextRound clears lastRoundScores', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.stay()
+    store.stay()
+    expect(store.lastRoundScores).not.toBeNull()
+
+    store.startNextRound()
+
+    expect(store.lastRoundScores).toBeNull()
+  })
 })
 
 describe('gameStore: persistence', () => {

@@ -10,6 +10,7 @@ import type { GameState } from '@/domain/entities/GameState'
 import { shouldEndRound } from '@/domain/entities/RoundState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
 import { startRound } from '@/domain/rules/round'
+import { calculateRoundScore } from '@/domain/rules/score'
 import type { CardId } from '@/domain/value-objects/CardId'
 import { LocalStorageGameRepository } from '@/infrastructure/persistence/LocalStorageGameRepository'
 import { CryptoRandomProvider } from '@/infrastructure/random/CryptoRandomProvider'
@@ -63,22 +64,29 @@ export const useGameStore = defineStore('game', () => {
   const game: Ref<GameState | null> = ref(null)
   const lastDrawnCardId: Ref<CardId | null> = ref(null)
   const lastEvent: Ref<GameEvent | null> = ref(null)
+  /** Per-player score earned in the round that just ended. Aligned on `game.players`. */
+  const lastRoundScores: Ref<readonly number[] | null> = ref(null)
 
   function persist(): void {
     if (game.value !== null) activeDeps.repository.save(game.value)
   }
 
   function endRoundIfReady(): void {
-    if (game.value?.round !== null && game.value?.round !== undefined) {
-      if (shouldEndRound(game.value.round)) {
-        const previous = game.value
-        game.value = endRound(game.value)
-        lastEvent.value =
-          previous.phase === 'in-round' && game.value.phase === 'finished'
-            ? { kind: 'game-finished' }
-            : { kind: 'round-ended', roundNumber: previous.roundNumber }
-      }
-    }
+    const current = game.value
+    if (current === null || current.round === null) return
+    if (!shouldEndRound(current.round)) return
+
+    // Snapshot per-player round scores BEFORE they get folded into totals
+    // so the RoundEndView can show the delta for each player.
+    lastRoundScores.value = current.round.playerStates.map(
+      (state) => calculateRoundScore(state).total,
+    )
+    const next = endRound(current)
+    game.value = next
+    lastEvent.value =
+      next.phase === 'finished'
+        ? { kind: 'game-finished' }
+        : { kind: 'round-ended', roundNumber: current.roundNumber }
   }
 
   function requireGame(): GameState {
@@ -126,6 +134,7 @@ export const useGameStore = defineStore('game', () => {
     game.value = startGame({ random: activeDeps.random }, { pseudos })
     lastDrawnCardId.value = null
     lastEvent.value = null
+    lastRoundScores.value = null
     persist()
   }
 
@@ -166,6 +175,7 @@ export const useGameStore = defineStore('game', () => {
     game.value = startRound(game.value as GameState)
     lastDrawnCardId.value = null
     lastEvent.value = null
+    lastRoundScores.value = null
     persist()
   }
 
@@ -174,6 +184,7 @@ export const useGameStore = defineStore('game', () => {
     game.value = null
     lastDrawnCardId.value = null
     lastEvent.value = null
+    lastRoundScores.value = null
   }
 
   function dismissEvent(): void {
@@ -192,6 +203,7 @@ export const useGameStore = defineStore('game', () => {
     game,
     lastDrawnCardId,
     lastEvent,
+    lastRoundScores,
     phase,
     isInRound,
     isBetweenRounds,
