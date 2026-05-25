@@ -1,0 +1,71 @@
+import { computed, watch } from 'vue'
+import { isSecondChanceCard } from '@/domain/entities/Card'
+import { getValidActionTargets } from '@/domain/rules/actions/targets'
+import { useGameStore } from '@/presentation/stores/gameStore'
+
+export interface TargetChoice {
+  readonly index: number
+  readonly pseudo: string
+}
+
+/**
+ * Glue between the store's `pendingAction` state and the UI:
+ *  - exposes the list of valid targets (with pseudos) for the modal,
+ *  - auto-resolves trivial cases (0 or 1 valid target) so the user
+ *    only sees a target selector when there is an actual choice.
+ *
+ * Auto-resolution rules:
+ *  - **Freeze / Flip Three** with a single valid target -> apply
+ *    directly (typically the origin when they are the only active).
+ *  - **Second Chance** with 0 valid targets -> resolve with `null`
+ *    so the use-case discards the card (per rule book).
+ *  - **Second Chance** with exactly 1 valid target -> apply directly
+ *    (either origin's empty slot, or the only eligible other player).
+ */
+export function useActionResolution() {
+  const store = useGameStore()
+
+  const choices = computed<readonly TargetChoice[]>(() => {
+    const game = store.game
+    const pending = store.pendingAction
+    if (game === null || game.round === null || pending === null) return []
+
+    return getValidActionTargets(pending.card, game.round.playerStates, pending.originIndex)
+      .map((index) => {
+        const pseudo = game.players[index]?.pseudo
+        return pseudo !== undefined ? { index, pseudo } : null
+      })
+      .filter((c): c is TargetChoice => c !== null)
+  })
+
+  const requiresUserChoice = computed(() => choices.value.length >= 2)
+
+  // Auto-resolve when no real choice exists. The watch on the pending
+  // card id (not the whole object) makes sure we run exactly once per
+  // distinct pending action.
+  watch(
+    () => store.pendingAction?.card.id ?? null,
+    () => {
+      const pending = store.pendingAction
+      if (pending === null) return
+
+      const targets = choices.value
+      if (targets.length >= 2) return // user choice required, leave it open
+
+      if (targets.length === 1) {
+        store.resolve(targets[0]!.index)
+        return
+      }
+
+      // No valid target: only Second Chance has this fallback (-> discard).
+      if (isSecondChanceCard(pending.card)) {
+        store.resolve(null)
+      }
+      // Freeze / Flip Three should always have at least one active target
+      // (the origin themselves). Hitting 0 here would be a domain bug.
+    },
+    { immediate: true, flush: 'post' },
+  )
+
+  return { choices, requiresUserChoice }
+}

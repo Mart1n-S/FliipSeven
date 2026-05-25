@@ -5,6 +5,8 @@ import ActionBar from '@/presentation/components/ActionBar.vue'
 import EventBanner from '@/presentation/components/EventBanner.vue'
 import PlayerRow from '@/presentation/components/PlayerRow.vue'
 import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
+import TargetSelectorModal from '@/presentation/components/TargetSelectorModal.vue'
+import { useActionResolution } from '@/presentation/composables/useActionResolution'
 import { useGame } from '@/presentation/composables/useGame'
 
 const router = useRouter()
@@ -22,10 +24,13 @@ const {
   lastEvent,
   draw,
   stay,
+  resolve,
   startNextRound,
   reset,
   dismissEvent,
 } = useGame()
+
+const { choices, requiresUserChoice } = useActionResolution()
 
 // Player whose turn the action bar acts on:
 //  - normal play: the active player
@@ -34,6 +39,13 @@ const currentTurnPlayer = computed(() => forcedDrawTarget.value ?? activePlayer.
 
 const actionsDisabled = computed(() => pendingAction.value !== null)
 const showActionBar = computed(() => isInRound.value && currentTurnPlayer.value !== null)
+
+// Pseudo of the player who drew the currently pending action (used by the modal).
+const pendingOriginPseudo = computed(() => {
+  const pending = pendingAction.value
+  if (pending === null || game.value === null) return ''
+  return game.value.players[pending.originIndex]?.pseudo ?? ''
+})
 
 function quit() {
   reset()
@@ -53,18 +65,9 @@ function quit() {
     <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
     <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
 
-    <!-- Pending action banner (full modal arrives at step 12) -->
+    <!-- Forced draws banner (only when no pending action is up) -->
     <div
-      v-if="pendingAction"
-      class="border-b border-amber-700 bg-amber-900/40 px-4 py-2 text-sm text-amber-200"
-      role="alert"
-    >
-      Une carte Action vient d'être tirée - résolution à venir (étape 12).
-    </div>
-
-    <!-- Forced draws banner -->
-    <div
-      v-else-if="isForcedDraw && forcedDrawTarget && game.forcedDraws"
+      v-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
       class="border-b border-indigo-700 bg-indigo-900/40 px-4 py-2 text-sm text-indigo-200"
     >
       <span class="font-semibold">{{ forcedDrawTarget.pseudo }}</span> doit piocher encore
@@ -138,6 +141,14 @@ function quit() {
       :disabled="actionsDisabled"
       @draw="draw"
       @stay="stay"
+    />
+
+    <TargetSelectorModal
+      v-if="requiresUserChoice && pendingAction"
+      :card="pendingAction.card"
+      :origin-pseudo="pendingOriginPseudo"
+      :choices="choices"
+      @select="resolve"
     />
   </main>
 
