@@ -27,7 +27,7 @@ const emit = defineEmits<{
         :disabled="disabled"
         @click="emit('stay')"
       >
-        Rester
+        Stopper
       </button>
       <button
         type="button"
@@ -35,7 +35,7 @@ const emit = defineEmits<{
         :disabled="disabled"
         @click="emit('draw')"
       >
-        Tirer
+        Piocher
       </button>
     </div>
   </footer>

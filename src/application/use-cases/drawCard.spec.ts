@@ -87,22 +87,32 @@ const deps = { random: new ZeroRandom() }
 // ---------- happy paths ----------
 
 describe('drawCard: number / modifier draws', () => {
-  it('adds a number card to the active player and keeps them active', () => {
+  it('adds a number card to the active player and rotates to the next active seat', () => {
     const game = inProgressGame(['active', 'active'], [makeNumber(7)])
     const next = drawCard(deps, game)
 
     expect(next.round?.playerStates[0]?.numberCards).toHaveLength(1)
     expect(next.round?.playerStates[0]?.status).toBe<PlayerStatus>('active')
-    expect(next.round?.activePlayerIndex).toBe(0) // still their turn (they can hit again or stay)
+    // After each hit the turn rotates - even if the player is still active.
+    expect(next.round?.activePlayerIndex).toBe(1)
     expect(next.deck).toHaveLength(0)
   })
 
-  it('adds a modifier card to the active player', () => {
+  it('adds a modifier card to the active player and rotates the turn', () => {
     const game = inProgressGame(['active', 'active'], [makeModifier('plus-4')])
     const next = drawCard(deps, game)
 
     expect(next.round?.playerStates[0]?.modifiers).toHaveLength(1)
     expect(next.round?.playerStates[0]?.status).toBe<PlayerStatus>('active')
+    expect(next.round?.activePlayerIndex).toBe(1)
+  })
+
+  it('keeps the same player active when they are the only active seat left', () => {
+    const game = inProgressGame(['active', 'busted'], [makeNumber(7)])
+    const next = drawCard(deps, game)
+
+    // Sole active player keeps playing - nextActivePlayerIndex returns fromIndex.
+    expect(next.round?.activePlayerIndex).toBe(0)
   })
 })
 
@@ -144,13 +154,16 @@ describe('drawCard: bust handling', () => {
 // ---------- action cards (idle context) ----------
 
 describe('drawCard: action cards (no forced draws)', () => {
-  it('sets pendingAction when an action card is drawn', () => {
+  it('sets pendingAction and still rotates the turn (origin keeps the choice)', () => {
     const freeze = makeFreeze()
     const game = inProgressGame(['active', 'active'], [freeze])
     const next = drawCard(deps, game)
 
     expect(next.pendingAction).toEqual({ card: freeze, originIndex: 0 })
     expect(next.actionQueue).toEqual([])
+    // Origin (0) drew their card so their turn is consumed; next will be P2 (index 1)
+    // once the modal is resolved.
+    expect(next.round?.activePlayerIndex).toBe(1)
   })
 
   it('does not consume an extra card or change row contents', () => {

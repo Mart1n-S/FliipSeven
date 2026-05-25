@@ -27,6 +27,12 @@ export interface DrawCardDeps {
  *      * otherwise: stored in `pendingAction` for the UI to ask the
  *        origin player to pick a target.
  *
+ * Turn rotation: after a **normal-play** draw (i.e. not part of a
+ * forced-draws sequence), the active player automatically rotates to
+ * the next active seat. This implements the rule book's
+ * "à tour de rôle" - each player gets one hit-or-stay choice per
+ * trip around the table; forced draws don't consume a turn.
+ *
  * When the deck runs dry the discard pile is reshuffled in place
  * (Fisher-Yates via the injected `RandomProvider`).
  *
@@ -43,8 +49,10 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
   }
 
   const round = game.round
-  const targetIndex =
-    game.forcedDraws !== null ? game.forcedDraws.targetIndex : round.activePlayerIndex
+  const wasInForcedDraws = game.forcedDraws !== null
+  const targetIndex = wasInForcedDraws
+    ? (game.forcedDraws as NonNullable<typeof game.forcedDraws>).targetIndex
+    : round.activePlayerIndex
   const targetState = round.playerStates[targetIndex]
   if (targetState === undefined) {
     throw new Error(`drawCard: invalid target index ${targetIndex}.`)
@@ -121,9 +129,15 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
     }
   }
 
-  // --- Advance the active player if they fell out (and we're idle) ----
+  // --- Active-player rotation ----------------------------------------
+  // Forced draws do NOT consume a turn (they're part of a Flip Three
+  // resolution triggered by an earlier hit). After any other draw, the
+  // turn rotates to the next active seat - even if the player is still
+  // active and would happily keep going.
   const intermediateRound: RoundState = { ...round, playerStates: newPlayerStates }
-  const newRound = withAdvancedActiveIfIdle(intermediateRound, newPendingAction)
+  const newRound = wasInForcedDraws
+    ? intermediateRound
+    : withAdvancedActive(intermediateRound, round.activePlayerIndex)
 
   return {
     ...game,
@@ -137,18 +151,11 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
 }
 
 /**
- * If there is no pending action (we're idle) AND the active player is
- * no longer active, hand the turn to the next active seat. Used at the
- * tail of every transition so the UI never sees an inconsistent state.
+ * Hand the turn to the next active seat after a normal-play draw.
+ * Returns the same round when no other active player exists (the sole
+ * remaining active keeps playing alone, per the rule book).
  */
-function withAdvancedActiveIfIdle(
-  round: RoundState,
-  pendingAction: PendingActionContext | null,
-): RoundState {
-  if (pendingAction !== null) return round
-  const activeIdx = round.activePlayerIndex
-  const activeState = round.playerStates[activeIdx]
-  if (activeState === undefined || activeState.status === 'active') return round
-  const next = nextActivePlayerIndex(round, activeIdx)
-  return { ...round, activePlayerIndex: next ?? activeIdx }
+function withAdvancedActive(round: RoundState, fromIndex: number): RoundState {
+  const next = nextActivePlayerIndex(round, fromIndex)
+  return { ...round, activePlayerIndex: next ?? fromIndex }
 }
