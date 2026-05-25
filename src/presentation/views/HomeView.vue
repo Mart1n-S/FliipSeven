@@ -1,18 +1,35 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import { useGame } from '@/presentation/composables/useGame'
 
 const router = useRouter()
-const { game, isFinished } = useGame()
+const { game, isFinished, reset } = useGame()
 
 const canResume = computed(() => game.value !== null && !isFinished.value)
+
+const showOverwriteConfirm = ref(false)
 
 function resume() {
   router.push({ name: 'game' })
 }
 
 function startNew() {
+  if (canResume.value) {
+    showOverwriteConfirm.value = true
+  } else {
+    goToSetup()
+  }
+}
+
+function confirmOverwrite() {
+  reset()
+  showOverwriteConfirm.value = false
+  goToSetup()
+}
+
+function goToSetup() {
   router.push({ name: 'setup' })
 }
 </script>
@@ -51,5 +68,16 @@ function startNew() {
     <p v-if="canResume" class="text-xs text-slate-500">
       Démarrer une nouvelle partie effacera la partie en cours.
     </p>
+
+    <ConfirmDialog
+      v-if="showOverwriteConfirm"
+      title="Écraser la partie en cours ?"
+      message="Tu vas perdre ta partie sauvegardée. Continuer ?"
+      confirm-label="Nouvelle partie"
+      cancel-label="Annuler"
+      destructive
+      @confirm="confirmOverwrite"
+      @cancel="showOverwriteConfirm = false"
+    />
   </main>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ActionBar from '@/presentation/components/ActionBar.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import EventBanner from '@/presentation/components/EventBanner.vue'
 import PlayerRow from '@/presentation/components/PlayerRow.vue'
 import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
@@ -50,7 +51,20 @@ const pendingOriginPseudo = computed(() => {
   return game.value.players[pending.originIndex]?.pseudo ?? ''
 })
 
+const showQuitConfirm = ref(false)
+
+function requestQuit() {
+  // Only ask if a round is still in progress; once between rounds or
+  // finished, "Quitter" doesn't actually destroy in-progress play.
+  if (isInRound.value) {
+    showQuitConfirm.value = true
+  } else {
+    quit()
+  }
+}
+
 function quit() {
+  showQuitConfirm.value = false
   reset()
   router.replace({ name: 'home' })
 }
@@ -63,6 +77,7 @@ function quit() {
       :dealer="dealer"
       :deck-size="game.deck.length"
       :discard-size="game.discard.length"
+      @quit="requestQuit"
     />
 
     <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
@@ -115,6 +130,17 @@ function quit() {
       :origin-pseudo="pendingOriginPseudo"
       :choices="choices"
       @select="resolve"
+    />
+
+    <ConfirmDialog
+      v-if="showQuitConfirm"
+      title="Quitter la partie ?"
+      message="La partie en cours et tous les scores seront perdus."
+      confirm-label="Quitter"
+      cancel-label="Continuer à jouer"
+      destructive
+      @confirm="quit"
+      @cancel="showQuitConfirm = false"
     />
   </main>
 
