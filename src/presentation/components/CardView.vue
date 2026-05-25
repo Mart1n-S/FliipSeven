@@ -7,8 +7,10 @@ const props = withDefaults(
   defineProps<{
     card: Card
     size?: 'sm' | 'md' | 'lg'
+    /** Trigger the freshly-drawn flash animation. */
+    highlight?: boolean
   }>(),
-  { size: 'md' },
+  { size: 'md', highlight: false },
 )
 
 const url = computed(() => getCardImageUrl(props.card))
@@ -32,14 +34,14 @@ const sizeClass = computed(() => {
     v-if="url"
     :src="url"
     :alt="label"
-    :class="sizeClass"
+    :class="[sizeClass, highlight ? 'card-flash-in' : '']"
     class="rounded-md object-cover shadow-md ring-1 ring-slate-700/50 select-none"
     draggable="false"
   />
   <!-- Fallback if the image asset is missing -->
   <span
     v-else
-    :class="sizeClass"
+    :class="[sizeClass, highlight ? 'card-flash-in' : '']"
     class="flex items-center justify-center rounded-md bg-slate-700 text-xs text-slate-300 ring-1 ring-slate-600 select-none"
     :aria-label="label"
   >

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Player } from '@/domain/entities/Player'
 import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { calculateRoundScore } from '@/domain/rules/score'
+import type { CardId } from '@/domain/value-objects/CardId'
 import type { PlayerStatus } from '@/domain/value-objects/PlayerStatus'
 import CardView from '@/presentation/components/CardView.vue'
 
@@ -11,6 +12,8 @@ const props = defineProps<{
   state: PlayerRoundState | null
   isActive: boolean
   isDealer: boolean
+  /** When set, the matching card on the row plays the flash-in animation. */
+  highlightedCardId?: CardId | null
 }>()
 
 const roundScore = computed(() => (props.state ? calculateRoundScore(props.state).total : 0))
@@ -84,7 +87,13 @@ const containerClass = computed(() => {
     <div v-if="state" class="flex flex-col gap-2">
       <!-- Number cards -->
       <div v-if="state.numberCards.length > 0" class="flex flex-wrap gap-1">
-        <CardView v-for="card in state.numberCards" :key="card.id" :card="card" size="sm" />
+        <CardView
+          v-for="card in state.numberCards"
+          :key="card.id"
+          :card="card"
+          size="sm"
+          :highlight="card.id === highlightedCardId"
+        />
       </div>
 
       <!-- Modifiers + Second Chance -->
@@ -92,8 +101,19 @@ const containerClass = computed(() => {
         v-if="state.modifiers.length > 0 || state.secondChance"
         class="flex flex-wrap items-center gap-1"
       >
-        <CardView v-for="card in state.modifiers" :key="card.id" :card="card" size="sm" />
-        <CardView v-if="state.secondChance" :card="state.secondChance" size="sm" />
+        <CardView
+          v-for="card in state.modifiers"
+          :key="card.id"
+          :card="card"
+          size="sm"
+          :highlight="card.id === highlightedCardId"
+        />
+        <CardView
+          v-if="state.secondChance"
+          :card="state.secondChance"
+          size="sm"
+          :highlight="state.secondChance.id === highlightedCardId"
+        />
       </div>
 
       <p

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ActionBar from '@/presentation/components/ActionBar.vue'
+import EventBanner from '@/presentation/components/EventBanner.vue'
 import PlayerRow from '@/presentation/components/PlayerRow.vue'
 import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
 import { useGame } from '@/presentation/composables/useGame'
@@ -17,10 +18,13 @@ const {
   forcedDrawTarget,
   isForcedDraw,
   dealer,
+  lastDrawnCardId,
+  lastEvent,
   draw,
   stay,
   startNextRound,
   reset,
+  dismissEvent,
 } = useGame()
 
 // Player whose turn the action bar acts on:
@@ -45,6 +49,9 @@ function quit() {
       :deck-size="game.deck.length"
       :discard-size="game.discard.length"
     />
+
+    <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
+    <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
 
     <!-- Pending action banner (full modal arrives at step 12) -->
     <div
@@ -73,6 +80,7 @@ function quit() {
         :state="playerState"
         :is-active="game.round.activePlayerIndex === index"
         :is-dealer="game.dealerIndex === index"
+        :highlighted-card-id="lastDrawnCardId"
       />
     </section>
 

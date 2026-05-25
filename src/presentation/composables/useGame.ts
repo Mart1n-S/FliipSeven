@@ -14,7 +14,16 @@ import { useGameStore } from '@/presentation/stores/gameStore'
  */
 export function useGame() {
   const store = useGameStore()
-  const { game, phase, isInRound, isBetweenRounds, isFinished, pendingAction } = storeToRefs(store)
+  const {
+    game,
+    phase,
+    isInRound,
+    isBetweenRounds,
+    isFinished,
+    pendingAction,
+    lastDrawnCardId,
+    lastEvent,
+  } = storeToRefs(store)
 
   const activePlayer = computed<Player | null>(() => {
     const g = game.value
@@ -50,6 +59,8 @@ export function useGame() {
     isBetweenRounds,
     isFinished,
     pendingAction,
+    lastDrawnCardId,
+    lastEvent,
 
     // computed
     activePlayer,
@@ -66,5 +77,6 @@ export function useGame() {
     resolve: store.resolve,
     startNextRound: store.startNextRound,
     reset: store.reset,
+    dismissEvent: store.dismissEvent,
   }
 }

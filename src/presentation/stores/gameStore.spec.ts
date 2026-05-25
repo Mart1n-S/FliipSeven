@@ -113,6 +113,66 @@ describe('gameStore: actions', () => {
   })
 })
 
+describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
+  it('draw sets lastDrawnCardId to the card that was on top of the deck', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const expectedId = store.game?.deck[0]?.id
+
+    store.draw()
+
+    expect(store.lastDrawnCardId).toBe(expectedId)
+  })
+
+  it('stay clears lastDrawnCardId', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.draw()
+    expect(store.lastDrawnCardId).not.toBeNull()
+
+    store.stay()
+
+    expect(store.lastDrawnCardId).toBeNull()
+  })
+
+  it('auto-end of round sets lastEvent to round-ended', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+
+    store.stay()
+    store.stay() // both stayed -> round auto-ends
+
+    expect(store.lastEvent).toEqual({ kind: 'round-ended', roundNumber: 1 })
+  })
+
+  it('dismissEvent clears the last event', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.stay()
+    store.stay()
+    expect(store.lastEvent).not.toBeNull()
+
+    store.dismissEvent()
+
+    expect(store.lastEvent).toBeNull()
+  })
+
+  it('newGame and reset clear both UI hints', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.draw()
+    expect(store.lastDrawnCardId).not.toBeNull()
+
+    store.reset()
+    expect(store.lastDrawnCardId).toBeNull()
+    expect(store.lastEvent).toBeNull()
+
+    store.newGame(['Alice', 'Bob'])
+    expect(store.lastDrawnCardId).toBeNull()
+    expect(store.lastEvent).toBeNull()
+  })
+})
+
 describe('gameStore: persistence', () => {
   it('loadFromStorage returns false when nothing was persisted', () => {
     const store = useGameStore()
