@@ -6,6 +6,12 @@ import { endRound } from '@/application/use-cases/endRound'
 import { resolveAction } from '@/application/use-cases/resolveAction'
 import { startGame } from '@/application/use-cases/startGame'
 import { stayPlayer } from '@/application/use-cases/stayPlayer'
+import {
+  isNumberCard,
+  isSecondChanceCard,
+  type NumberCard,
+  type SecondChanceCard,
+} from '@/domain/entities/Card'
 import type { GameState } from '@/domain/entities/GameState'
 import { shouldEndRound } from '@/domain/entities/RoundState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
@@ -43,7 +49,15 @@ export type GameEvent =
   | { kind: 'bust'; playerIndex: number; playerPseudo: string }
   | { kind: 'flip7'; playerIndex: number; playerPseudo: string }
   | { kind: 'frozen'; playerIndex: number; playerPseudo: string }
-  | { kind: 'second-chance'; playerIndex: number; playerPseudo: string }
+  | {
+      kind: 'second-chance-save'
+      playerIndex: number
+      playerPseudo: string
+      /** The duplicate number card that the SC neutralised. */
+      duplicateCard: NumberCard
+      /** The Second Chance card that was consumed. */
+      secondChanceCard: SecondChanceCard
+    }
   | { kind: 'round-ended'; roundNumber: number }
   | { kind: 'game-finished' }
 
@@ -99,6 +113,29 @@ export const useGameStore = defineStore('game', () => {
   /** Diff active player statuses to detect the most significant transition. */
   function detectEventAfterDraw(before: GameState, after: GameState): GameEvent | null {
     if (!before.round || !after.round) return null
+
+    // Priority 1: Second Chance save (player would have busted otherwise).
+    // Detected by a SC slot transitioning from filled to empty during a draw.
+    for (let i = 0; i < after.round.playerStates.length; i += 1) {
+      const prevSC = before.round.playerStates[i]?.secondChance ?? null
+      const currSC = after.round.playerStates[i]?.secondChance ?? null
+      if (prevSC !== null && currSC === null) {
+        const newDiscards = after.discard.slice(before.discard.length)
+        const duplicate = newDiscards.find(isNumberCard)
+        const sc = newDiscards.find(isSecondChanceCard)
+        if (duplicate && sc) {
+          return {
+            kind: 'second-chance-save',
+            playerIndex: i,
+            playerPseudo: after.players[i]?.pseudo ?? '',
+            duplicateCard: duplicate,
+            secondChanceCard: sc,
+          }
+        }
+      }
+    }
+
+    // Priority 2: bust / flip7 status transitions.
     for (let i = 0; i < after.round.playerStates.length; i += 1) {
       const prev = before.round.playerStates[i]?.status
       const curr = after.round.playerStates[i]?.status

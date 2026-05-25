@@ -1,8 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { GameRepository } from '@/application/ports/GameRepository'
+import type { NumberCard, SecondChanceCard } from '@/domain/entities/Card'
 import type { GameState } from '@/domain/entities/GameState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
+import { createCardId } from '@/domain/value-objects/CardId'
 import { setGameStoreDeps, useGameStore } from '@/presentation/stores/gameStore'
 
 class ZeroRandom implements RandomProvider {
@@ -194,6 +196,59 @@ describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
     store.startNextRound()
 
     expect(store.lastRoundScores).toBeNull()
+  })
+
+  it('emits a second-chance-save event with both cards when SC neutralises a duplicate', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const duplicate: NumberCard = {
+      id: createCardId('number-5-1'),
+      kind: 'number',
+      value: 5,
+    }
+    const existing: NumberCard = {
+      id: createCardId('number-5-0'),
+      kind: 'number',
+      value: 5,
+    }
+    const sc: SecondChanceCard = {
+      id: createCardId('action-second-chance-test'),
+      kind: 'action',
+      action: 'second-chance',
+    }
+
+    // Patch the game directly: P1 holds SC and a 5; the top of the deck
+    // is another 5; deal phase is done; P1 is active.
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [duplicate, ...baseGame.deck],
+        dealQueue: null,
+        round: {
+          ...round,
+          activePlayerIndex: 0,
+          playerStates: round.playerStates.map((s, i) =>
+            i === 0 ? { ...s, numberCards: [existing], secondChance: sc } : s,
+          ),
+        },
+      },
+    })
+
+    store.draw()
+
+    expect(store.lastEvent).toMatchObject({
+      kind: 'second-chance-save',
+      playerIndex: 0,
+      duplicateCard: { id: duplicate.id, value: 5 },
+      secondChanceCard: { id: sc.id },
+    })
+    // P1's row stays with 1 number card (the duplicate goes to the discard
+    // alongside the SC).
+    expect(store.game?.round?.playerStates[0]?.numberCards).toHaveLength(1)
+    expect(store.game?.round?.playerStates[0]?.secondChance).toBeNull()
   })
 })
 

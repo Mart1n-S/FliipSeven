@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import CardView from '@/presentation/components/CardView.vue'
 import type { GameEvent } from '@/presentation/stores/gameStore'
 
 const props = defineProps<{
@@ -33,10 +34,10 @@ const style = computed<EventStyle>(() => {
         message: `${e.playerPseudo} a été gelé.`,
         classes: 'border-sky-700 bg-sky-900/40 text-sky-100',
       }
-    case 'second-chance':
+    case 'second-chance-save':
       return {
-        message: `${e.playerPseudo} a utilisé sa Seconde Chance.`,
-        classes: 'border-emerald-700 bg-emerald-900/40 text-emerald-100',
+        message: `Seconde Chance ! ${e.playerPseudo} a évité un doublon de ${e.duplicateCard.value}.`,
+        classes: 'border-emerald-600 bg-emerald-900/40 text-emerald-100',
       }
     case 'round-ended':
       return {
@@ -59,20 +60,25 @@ const style = computed<EventStyle>(() => {
 </script>
 
 <template>
-  <div
-    class="flex items-center justify-between gap-3 border-b px-4 py-2 text-sm"
-    :class="style.classes"
-    role="status"
-    aria-live="polite"
-  >
-    <span class="font-medium">{{ style.message }}</span>
-    <button
-      type="button"
-      class="rounded p-1 text-current opacity-70 transition hover:opacity-100"
-      aria-label="Fermer"
-      @click="$emit('dismiss')"
-    >
-      &times;
-    </button>
+  <div class="border-b px-4 py-2 text-sm" :class="style.classes" role="status" aria-live="polite">
+    <div class="flex items-center justify-between gap-3">
+      <span class="font-medium">{{ style.message }}</span>
+      <button
+        type="button"
+        class="rounded p-1 text-current opacity-70 transition hover:opacity-100"
+        aria-label="Fermer"
+        @click="$emit('dismiss')"
+      >
+        &times;
+      </button>
+    </div>
+
+    <!-- Show the saved duplicate alongside the consumed SC card. -->
+    <div v-if="event.kind === 'second-chance-save'" class="mt-2 flex items-center gap-2">
+      <CardView :card="event.duplicateCard" size="sm" />
+      <span class="text-xs opacity-70">+</span>
+      <CardView :card="event.secondChanceCard" size="sm" />
+      <span class="ml-1 text-xs opacity-70">→ défausse</span>
+    </div>
   </div>
 </template>
