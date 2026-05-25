@@ -21,9 +21,12 @@ export function startRound(game: GameState): GameState {
 
   const n = game.players.length
   const playerStates = game.players.map((player) => createPlayerRoundState(player.id))
-  const activePlayerIndex = (game.dealerIndex + 1) % n
+  const startSeat = (game.dealerIndex + 1) % n
+  // Initial deal goes around the table starting from the seat left of
+  // the dealer. The dealer is dealt to last (per the rule book).
+  const dealQueue = Array.from({ length: n }, (_, i) => (startSeat + i) % n)
 
-  const round: RoundState = { playerStates, activePlayerIndex }
+  const round: RoundState = { playerStates, activePlayerIndex: startSeat }
 
   return {
     ...game,
@@ -33,6 +36,7 @@ export function startRound(game: GameState): GameState {
     pendingAction: null,
     forcedDraws: null,
     actionQueue: [],
+    dealQueue,
   }
 }
 
@@ -85,5 +89,6 @@ export function endRound(game: GameState): GameState {
     pendingAction: null,
     forcedDraws: null,
     actionQueue: [],
+    dealQueue: null,
   }
 }

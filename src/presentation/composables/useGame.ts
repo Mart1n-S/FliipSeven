@@ -52,6 +52,19 @@ export function useGame() {
     return g.players[g.forcedDraws.targetIndex] ?? null
   })
 
+  const isDealPhase = computed(() => {
+    const queue = game.value?.dealQueue
+    return queue !== null && queue !== undefined && queue.length > 0
+  })
+
+  /** Player currently being dealt to during the initial-deal phase. */
+  const currentDealee = computed<Player | null>(() => {
+    const g = game.value
+    if (g === null || g.dealQueue === null || g.dealQueue.length === 0) return null
+    const index = g.dealQueue[0]
+    return index !== undefined ? (g.players[index] ?? null) : null
+  })
+
   return {
     // refs
     game,
@@ -70,6 +83,8 @@ export function useGame() {
     dealer,
     isForcedDraw,
     forcedDrawTarget,
+    isDealPhase,
+    currentDealee,
 
     // actions
     loadFromStorage: store.loadFromStorage,

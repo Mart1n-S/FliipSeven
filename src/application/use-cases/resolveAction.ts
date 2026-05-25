@@ -11,6 +11,7 @@ import { nextActivePlayerIndex, type RoundState } from '@/domain/entities/RoundS
 import { applyFlipThree } from '@/domain/rules/actions/flipThree'
 import { applyFreeze } from '@/domain/rules/actions/freeze'
 import { placeSecondChance } from '@/domain/rules/actions/secondChance'
+import { advanceDealQueueIfIdle } from '@/domain/rules/deal'
 
 /**
  * Resolve the action stored in `game.pendingAction` against the
@@ -87,7 +88,7 @@ export function resolveAction(game: GameState, targetIndex: number | null): Game
   const intermediate: RoundState = { ...round, playerStates: newPlayerStates }
   const newRound = withAdvancedActiveIfIdle(intermediate, newPendingAction, newForcedDraws)
 
-  return {
+  const intermediateGame: GameState = {
     ...game,
     discard: newDiscard,
     round: newRound,
@@ -95,6 +96,10 @@ export function resolveAction(game: GameState, targetIndex: number | null): Game
     actionQueue: newActionQueue,
     forcedDraws: newForcedDraws,
   }
+
+  // If the resolved action belonged to a deal-phase dealee and the
+  // chain is now fully settled, advance the deal queue.
+  return advanceDealQueueIfIdle(intermediateGame)
 }
 
 function requireActiveTarget(round: RoundState, targetIndex: number | null, cardName: string) {

@@ -4,6 +4,7 @@ import type { GameState, PendingActionContext } from '@/domain/entities/GameStat
 import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { nextActivePlayerIndex, type RoundState } from '@/domain/entities/RoundState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
+import { advanceDealQueueIfIdle } from '@/domain/rules/deal'
 import { drawModifier, drawNumberCard } from '@/domain/rules/draw'
 
 export interface DrawCardDeps {
@@ -13,10 +14,10 @@ export interface DrawCardDeps {
 /**
  * Apply a single card draw.
  *
- * Determines the target automatically:
- *  - If a Flip Three sequence is in progress (`forcedDraws`), the target
- *    is the forced player.
- *  - Otherwise, the target is the active player.
+ * Target priority:
+ *  1. `forcedDraws.targetIndex` (Flip Three sequence in progress)
+ *  2. `dealQueue[0]` (initial deal phase at round start)
+ *  3. `round.activePlayerIndex` (normal play)
  *
  * Behaviour by card kind:
  *  - Number  -> applied via the domain `drawNumberCard` rule (may bust,
@@ -28,10 +29,13 @@ export interface DrawCardDeps {
  *        origin player to pick a target.
  *
  * Turn rotation: after a **normal-play** draw (i.e. not part of a
- * forced-draws sequence), the active player automatically rotates to
- * the next active seat. This implements the rule book's
- * "à tour de rôle" - each player gets one hit-or-stay choice per
- * trip around the table; forced draws don't consume a turn.
+ * forced-draws sequence and not part of the initial deal), the active
+ * player rotates to the next active seat. Forced draws and the
+ * initial deal don't consume a play-phase turn.
+ *
+ * After the draw + rotation logic, {@link advanceDealQueueIfIdle} is
+ * called so the deal queue progresses to the next dealee as soon as
+ * the current dealee's action chain settles.
  *
  * When the deck runs dry the discard pile is reshuffled in place
  * (Fisher-Yates via the injected `RandomProvider`).
@@ -50,9 +54,8 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
 
   const round = game.round
   const wasInForcedDraws = game.forcedDraws !== null
-  const targetIndex = wasInForcedDraws
-    ? (game.forcedDraws as NonNullable<typeof game.forcedDraws>).targetIndex
-    : round.activePlayerIndex
+  const wasInDealPhase = !wasInForcedDraws && game.dealQueue !== null && game.dealQueue.length > 0
+  const targetIndex = pickTargetIndex(game, round)
   const targetState = round.playerStates[targetIndex]
   if (targetState === undefined) {
     throw new Error(`drawCard: invalid target index ${targetIndex}.`)
@@ -130,16 +133,16 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
   }
 
   // --- Active-player rotation ----------------------------------------
-  // Forced draws do NOT consume a turn (they're part of a Flip Three
-  // resolution triggered by an earlier hit). After any other draw, the
-  // turn rotates to the next active seat - even if the player is still
-  // active and would happily keep going.
+  // Only rotate during normal play. Forced draws (Flip Three) and the
+  // initial deal phase manage their own target ordering and don't
+  // consume a play-phase turn.
   const intermediateRound: RoundState = { ...round, playerStates: newPlayerStates }
-  const newRound = wasInForcedDraws
-    ? intermediateRound
-    : withAdvancedActive(intermediateRound, round.activePlayerIndex)
+  const newRound =
+    wasInForcedDraws || wasInDealPhase
+      ? intermediateRound
+      : withAdvancedActive(intermediateRound, round.activePlayerIndex)
 
-  return {
+  const intermediateGame: GameState = {
     ...game,
     deck: newDeck,
     discard: [...workingDiscard, ...discardAdditions],
@@ -148,6 +151,9 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
     actionQueue: newActionQueue,
     forcedDraws: newForcedDraws,
   }
+
+  // Pop the deal queue if the dealee's action chain just settled.
+  return advanceDealQueueIfIdle(intermediateGame)
 }
 
 /**
@@ -158,4 +164,16 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
 function withAdvancedActive(round: RoundState, fromIndex: number): RoundState {
   const next = nextActivePlayerIndex(round, fromIndex)
   return { ...round, activePlayerIndex: next ?? fromIndex }
+}
+
+/**
+ * Pick the draw target according to priority: forced draws > deal
+ * queue > active player.
+ */
+function pickTargetIndex(game: GameState, round: RoundState): number {
+  if (game.forcedDraws !== null) return game.forcedDraws.targetIndex
+  if (game.dealQueue !== null && game.dealQueue.length > 0) {
+    return game.dealQueue[0] as number
+  }
+  return round.activePlayerIndex
 }

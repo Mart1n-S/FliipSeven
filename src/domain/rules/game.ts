@@ -66,6 +66,7 @@ export function createGame(pseudos: readonly string[], deck: readonly Card[]): G
     pendingAction: null,
     forcedDraws: null,
     actionQueue: [],
+    dealQueue: null,
   }
 }
 

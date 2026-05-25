@@ -8,6 +8,7 @@ import PlayerRow from '@/presentation/components/PlayerRow.vue'
 import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
 import TargetSelectorModal from '@/presentation/components/TargetSelectorModal.vue'
 import { useActionResolution } from '@/presentation/composables/useActionResolution'
+import { useAutoDeal } from '@/presentation/composables/useAutoDeal'
 import { useGame } from '@/presentation/composables/useGame'
 import GameEndView from '@/presentation/views/GameEndView.vue'
 import RoundEndView from '@/presentation/views/RoundEndView.vue'
@@ -22,6 +23,8 @@ const {
   activePlayer,
   forcedDrawTarget,
   isForcedDraw,
+  isDealPhase,
+  currentDealee,
   dealer,
   lastDrawnCardId,
   lastEvent,
@@ -36,13 +39,23 @@ const {
 
 const { choices, requiresUserChoice } = useActionResolution()
 
+// Auto-deal one card every ~600ms during the initial deal phase.
+useAutoDeal()
+
 // Player whose turn the action bar acts on:
-//  - normal play: the active player
-//  - Flip Three sequence: the forced target (they are the one receiving cards)
-const currentTurnPlayer = computed(() => forcedDrawTarget.value ?? activePlayer.value)
+//  - deal phase    : the current dealee (info only - bar is hidden)
+//  - Flip Three    : the forced target (they receive cards)
+//  - normal play   : the active player
+const currentTurnPlayer = computed(
+  () => currentDealee.value ?? forcedDrawTarget.value ?? activePlayer.value,
+)
 
 const actionsDisabled = computed(() => pendingAction.value !== null)
-const showActionBar = computed(() => isInRound.value && currentTurnPlayer.value !== null)
+// During the initial deal phase the dealer distributes automatically -
+// hide the hit/stay buttons until the deal is done.
+const showActionBar = computed(
+  () => isInRound.value && !isDealPhase.value && currentTurnPlayer.value !== null,
+)
 
 // Pseudo of the player who drew the currently pending action (used by the modal).
 const pendingOriginPseudo = computed(() => {
@@ -83,9 +96,18 @@ function quit() {
     <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
     <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
 
-    <!-- Forced draws banner (only when no pending action is up) -->
+    <!-- Initial deal phase indicator -->
     <div
-      v-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
+      v-if="isDealPhase && currentDealee && !pendingAction"
+      class="border-b border-emerald-700 bg-emerald-900/40 px-4 py-2 text-sm text-emerald-100"
+    >
+      Distribution en cours - carte pour
+      <span class="font-semibold">{{ currentDealee.pseudo }}</span>
+    </div>
+
+    <!-- Forced draws banner (hidden during pending action or deal phase) -->
+    <div
+      v-else-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
       class="border-b border-indigo-700 bg-indigo-900/40 px-4 py-2 text-sm text-indigo-200"
     >
       <span class="font-semibold">{{ forcedDrawTarget.pseudo }}</span> doit piocher encore
@@ -99,7 +121,11 @@ function quit() {
         :key="game.players[index]!.id"
         :player="game.players[index]!"
         :state="playerState"
-        :is-active="game.round.activePlayerIndex === index"
+        :is-active="
+          isDealPhase
+            ? game.dealQueue?.[0] === index
+            : (game.forcedDraws?.targetIndex ?? game.round.activePlayerIndex) === index
+        "
         :is-dealer="game.dealerIndex === index"
         :highlighted-card-id="lastDrawnCardId"
       />

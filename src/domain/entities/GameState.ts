@@ -56,4 +56,11 @@ export interface GameState {
    * `pendingAction`.
    */
   readonly actionQueue: readonly ActionCard[]
+  /**
+   * Players still to receive their initial-deal card at round start.
+   * The HEAD of the array is the current dealee (their draw / action
+   * chain is in progress). `null` once the deal phase is over and the
+   * normal play phase begins.
+   */
+  readonly dealQueue: readonly number[] | null
 }
