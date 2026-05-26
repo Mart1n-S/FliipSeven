@@ -1,8 +1,35 @@
 @import 'tailwindcss';
 
+/*
+ * Design tokens — Phase 1 of the visual redesign.
+ *
+ * The previous theme used Inter + the default Tailwind slate palette.
+ * The new direction (inspired by the user-validated mockups) keeps
+ * Tailwind's slate scale as a base but introduces:
+ *  - Geist + Geist Mono as the type pair (sans for text, mono for
+ *    numerals and timestamps)
+ *  - A few semantic surface / accent tokens so components don't have
+ *    to repeat the same slate-900/40 / slate-800 / etc. everywhere.
+ *
+ * Status colors map 1:1 to player statuses so they can be used as
+ * tailwind utilities directly (eg. `text-[--color-status-active]`).
+ */
 @theme {
-  --font-sans:
-    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Surfaces */
+  --color-surface-base: oklch(15.5% 0.012 250);
+  --color-surface-raised: oklch(19% 0.012 250);
+  --color-surface-overlay: oklch(22% 0.012 250);
+  --color-surface-border: oklch(28% 0.012 250);
+
+  /* Status colors (active / stayed / busted / frozen / flip7) */
+  --color-status-active: oklch(78% 0.13 210);
+  --color-status-stayed: oklch(70% 0.02 250);
+  --color-status-busted: oklch(70% 0.18 20);
+  --color-status-frozen: oklch(78% 0.11 200);
+  --color-status-flip7: oklch(82% 0.13 80);
 }
 
 html,
@@ -13,11 +40,33 @@ body,
 
 body {
   margin: 0;
-  background-color: var(--color-slate-900);
+  background-color: var(--color-surface-base);
   color: var(--color-slate-100);
   font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Tabular numbers everywhere they appear (scores, deck counts,
+ * timestamps): keeps columns aligned and avoids the cosmetic shake
+ * when a score increments.
+ */
+.tabular-nums,
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Focus-visible — accessibility baseline.
+ * Buttons and links get a clearly visible ring keyboard-only.
+ * Touch / mouse interactions are unaffected.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-status-active);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Highlight the card the user has just drawn. Plays once at mount. */
