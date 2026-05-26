@@ -6,11 +6,7 @@ import {
   type FlipThreeCard,
   type SecondChanceCard,
 } from '@/domain/entities/Card'
-import type {
-  GameState,
-  PendingActionContext,
-  QueuedAction,
-} from '@/domain/entities/GameState'
+import type { GameState, PendingActionContext, QueuedAction } from '@/domain/entities/GameState'
 import { nextActivePlayerIndex, type RoundState } from '@/domain/entities/RoundState'
 import { applyFlipThree } from '@/domain/rules/actions/flipThree'
 import { applyFreeze } from '@/domain/rules/actions/freeze'

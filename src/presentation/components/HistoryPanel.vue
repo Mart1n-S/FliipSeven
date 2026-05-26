@@ -91,9 +91,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
     <aside
       class="flex h-full w-full max-w-md flex-col border-l border-slate-800 bg-slate-900 shadow-xl"
     >
-      <header
-        class="flex items-center justify-between border-b border-slate-800 px-4 py-3"
-      >
+      <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <div>
           <h2 class="text-base font-semibold text-slate-100">Historique</h2>
           <p class="text-xs text-slate-400">{{ entries.length }} évènement(s)</p>
@@ -176,11 +174,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
                 :card="card"
                 size="sm"
               />
-              <CardView
-                v-if="entry.hand.secondChance"
-                :card="entry.hand.secondChance"
-                size="sm"
-              />
+              <CardView v-if="entry.hand.secondChance" :card="entry.hand.secondChance" size="sm" />
             </div>
           </div>
 
