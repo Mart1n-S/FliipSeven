@@ -240,6 +240,50 @@ describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
     expect(store.game?.round?.playerStates[0]?.status).toBe('busted')
   })
 
+  it('emits an enriched flip7 event carrying the 7th card that completed the row', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const seventh: NumberCard = {
+      id: createCardId('number-7-final'),
+      kind: 'number',
+      value: 7,
+    }
+    const sixCards: NumberCard[] = [1, 2, 3, 4, 5, 6].map((v) => ({
+      id: createCardId(`number-${v}-0`),
+      kind: 'number',
+      value: v as NumberCard['value'],
+    }))
+
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [seventh, ...baseGame.deck],
+        dealQueue: null,
+        round: {
+          ...round,
+          activePlayerIndex: 0,
+          playerStates: round.playerStates.map((s, i) =>
+            i === 0 ? { ...s, numberCards: sixCards } : s,
+          ),
+        },
+      },
+    })
+
+    store.draw()
+
+    // The flip7 event must survive the immediate round-end (specific
+    // draw events take priority over the generic round-ended banner).
+    expect(store.lastEvent).toMatchObject({
+      kind: 'flip7',
+      playerIndex: 0,
+      finalCard: { id: seventh.id, value: 7 },
+    })
+    expect(store.game?.players[0]?.totalScore).toBeGreaterThanOrEqual(15)
+  })
+
   it('emits an action-drawn event when an Action card is pulled (visible even on auto-resolve)', () => {
     const store = useGameStore()
     store.newGame(['Alice', 'Bob'])

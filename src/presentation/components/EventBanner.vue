@@ -98,6 +98,12 @@ const style = computed<EventStyle>(() => {
       <span class="text-xs opacity-70">doublon déjà sur la rangée</span>
     </div>
 
+    <!-- Show the 7th card that completed the Flip 7. -->
+    <div v-else-if="event.kind === 'flip7'" class="mt-2 flex items-center gap-2">
+      <CardView :card="event.finalCard" size="sm" />
+      <span class="text-xs opacity-70">7e carte → +15 pts</span>
+    </div>
+
     <!-- Show the action card that was just drawn (even if it auto-resolves). -->
     <div v-else-if="event.kind === 'action-drawn'" class="mt-2 flex items-center gap-2">
       <CardView :card="event.card" size="sm" />

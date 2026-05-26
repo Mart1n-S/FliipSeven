@@ -56,7 +56,13 @@ export type GameEvent =
       /** The number card that triggered the bust (= the drawn duplicate). */
       duplicateCard: NumberCard
     }
-  | { kind: 'flip7'; playerIndex: number; playerPseudo: string }
+  | {
+      kind: 'flip7'
+      playerIndex: number
+      playerPseudo: string
+      /** The 7th unique number card that completed the row. */
+      finalCard: NumberCard
+    }
   | { kind: 'frozen'; playerIndex: number; playerPseudo: string }
   | {
       kind: 'second-chance-save'
@@ -113,10 +119,17 @@ export const useGameStore = defineStore('game', () => {
     )
     const next = endRound(current)
     game.value = next
-    lastEvent.value =
-      next.phase === 'finished'
-        ? { kind: 'game-finished' }
-        : { kind: 'round-ended', roundNumber: current.roundNumber }
+
+    // Only set a generic round-ended / game-finished event if no more
+    // specific draw event (bust / flip7 / action-drawn / sc-save) was
+    // just emitted. The phase transition is driven by `isFinished` /
+    // `isBetweenRounds` anyway, the banner here is purely informational.
+    if (lastEvent.value === null) {
+      lastEvent.value =
+        next.phase === 'finished'
+          ? { kind: 'game-finished' }
+          : { kind: 'round-ended', roundNumber: current.roundNumber }
+    }
   }
 
   function requireGame(): GameState {
@@ -188,11 +201,12 @@ export const useGameStore = defineStore('game', () => {
           duplicateCard: drawnCard,
         }
       }
-      if (prev === 'active' && curr === 'flip7') {
+      if (prev === 'active' && curr === 'flip7' && drawnCard !== null && isNumberCard(drawnCard)) {
         return {
           kind: 'flip7',
           playerIndex: i,
           playerPseudo: after.players[i]?.pseudo ?? '',
+          finalCard: drawnCard,
         }
       }
     }
