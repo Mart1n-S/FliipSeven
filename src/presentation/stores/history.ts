@@ -1,5 +1,27 @@
-import type { ActionCard, Card } from '@/domain/entities/Card'
+import type {
+  ActionCard,
+  Card,
+  ModifierCard,
+  NumberCard,
+  SecondChanceCard,
+} from '@/domain/entities/Card'
+import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import type { NumberValue } from '@/domain/value-objects/NumberValue'
+
+/** Snapshot of a player's row at the moment a status change happened. */
+export interface PlayerHandSnapshot {
+  readonly numberCards: readonly NumberCard[]
+  readonly modifiers: readonly ModifierCard[]
+  readonly secondChance: SecondChanceCard | null
+}
+
+export function snapshotHand(state: PlayerRoundState): PlayerHandSnapshot {
+  return {
+    numberCards: [...state.numberCards],
+    modifiers: [...state.modifiers],
+    secondChance: state.secondChance,
+  }
+}
 
 /**
  * Single entry of the game journal.
@@ -8,6 +30,11 @@ import type { NumberValue } from '@/domain/value-objects/NumberValue'
  * starts a new game (or explicitly clears it). It is meant for
  * dispute resolution: every transition that changes the visible
  * state of the table is captured here with a UTC ISO timestamp.
+ *
+ * Status-change entries (bust / stay / flip7 / frozen) carry a
+ * {@link PlayerHandSnapshot} so the panel can show the player's full
+ * row exactly as it was at that moment - useful when the user wants
+ * to double-check why a player was eliminated.
  */
 export type HistoryEntry =
   | {
@@ -33,11 +60,14 @@ export type HistoryEntry =
       readonly kind: 'bust'
       readonly playerPseudo: string
       readonly duplicateValue: NumberValue
+      readonly hand: PlayerHandSnapshot
       readonly timestamp: string
     }
   | {
       readonly kind: 'flip7'
       readonly playerPseudo: string
+      readonly hand: PlayerHandSnapshot
+      readonly roundScore: number
       readonly timestamp: string
     }
   | {
@@ -50,6 +80,13 @@ export type HistoryEntry =
       readonly kind: 'stay'
       readonly playerPseudo: string
       readonly roundScore: number
+      readonly hand: PlayerHandSnapshot
+      readonly timestamp: string
+    }
+  | {
+      readonly kind: 'frozen'
+      readonly playerPseudo: string
+      readonly hand: PlayerHandSnapshot
       readonly timestamp: string
     }
   | {

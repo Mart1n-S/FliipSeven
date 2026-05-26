@@ -28,6 +28,7 @@ import {
   loadHistory,
   nowIso,
   saveHistory,
+  snapshotHand,
   type HistoryEntry,
 } from '@/presentation/stores/history'
 
@@ -299,12 +300,19 @@ export const useGameStore = defineStore('game', () => {
           kind: 'bust',
           playerPseudo: pseudo,
           duplicateValue: drawnCard.value,
+          hand: snapshotHand(curr),
           timestamp: nowIso(),
         })
         continue
       }
       if (prev.status === 'active' && curr.status === 'flip7') {
-        entries.push({ kind: 'flip7', playerPseudo: pseudo, timestamp: nowIso() })
+        entries.push({
+          kind: 'flip7',
+          playerPseudo: pseudo,
+          hand: snapshotHand(curr),
+          roundScore: calculateRoundScore(curr).total,
+          timestamp: nowIso(),
+        })
       }
     }
 
@@ -368,7 +376,15 @@ export const useGameStore = defineStore('game', () => {
     game.value = stayPlayer(before)
     lastDrawnCardId.value = null
     lastEvent.value = null
-    appendHistory({ kind: 'stay', playerPseudo, roundScore, timestamp: nowIso() })
+    if (activeState !== undefined) {
+      appendHistory({
+        kind: 'stay',
+        playerPseudo,
+        roundScore,
+        hand: snapshotHand(activeState),
+        timestamp: nowIso(),
+      })
+    }
     endRoundIfReady()
     persist()
   }
@@ -377,7 +393,8 @@ export const useGameStore = defineStore('game', () => {
     const before = requireGame()
     const pending = before.pendingAction
 
-    game.value = resolveAction(before, targetIndex)
+    const after = resolveAction(before, targetIndex)
+    game.value = after
 
     if (pending !== null) {
       const originPseudo = before.players[pending.originIndex]?.pseudo ?? ''
@@ -390,6 +407,25 @@ export const useGameStore = defineStore('game', () => {
         targetPseudo,
         timestamp: nowIso(),
       })
+
+      // Surface a `frozen` snapshot when a Freeze just locked someone,
+      // so the panel shows the row exactly as it was at the moment of
+      // the freeze (useful for litige resolution).
+      if (
+        targetIndex !== null &&
+        before.round !== null &&
+        after.round !== null &&
+        before.round.playerStates[targetIndex]?.status === 'active' &&
+        after.round.playerStates[targetIndex]?.status === 'frozen'
+      ) {
+        const frozenState = after.round.playerStates[targetIndex]!
+        appendHistory({
+          kind: 'frozen',
+          playerPseudo: after.players[targetIndex]?.pseudo ?? '',
+          hand: snapshotHand(frozenState),
+          timestamp: nowIso(),
+        })
+      }
     }
 
     lastDrawnCardId.value = null

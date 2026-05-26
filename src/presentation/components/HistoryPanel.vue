@@ -31,7 +31,9 @@ function describe(entry: HistoryEntry): string {
     case 'bust':
       return `${entry.playerPseudo} bust sur un doublon de ${entry.duplicateValue}`
     case 'flip7':
-      return `${entry.playerPseudo} fait Flip 7 ! (+15 pts)`
+      return `${entry.playerPseudo} fait Flip 7 ! (+${entry.roundScore} pts)`
+    case 'frozen':
+      return `${entry.playerPseudo} a été gelé`
     case 'sc-save':
       return `Seconde Chance : ${entry.playerPseudo} évite le doublon de ${entry.duplicateValue}`
     case 'stay':
@@ -69,6 +71,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
   draw: 'text-slate-300',
   bust: 'text-rose-400',
   flip7: 'text-amber-300',
+  frozen: 'text-sky-400',
   'sc-save': 'text-emerald-300',
   stay: 'text-sky-300',
   'action-resolved': 'text-amber-300',
@@ -134,6 +137,51 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
           </div>
           <div v-else-if="entry.kind === 'action-resolved'" class="mt-1.5 flex items-center gap-2">
             <CardView :card="entry.card" size="sm" />
+          </div>
+
+          <!-- Snapshot of the player's full row when they bust / stay /
+               freeze / Flip 7 - useful for litige resolution. -->
+          <div
+            v-else-if="
+              entry.kind === 'bust' ||
+              entry.kind === 'stay' ||
+              entry.kind === 'flip7' ||
+              entry.kind === 'frozen'
+            "
+            class="mt-2 rounded-md border border-slate-800 bg-slate-950/40 p-2"
+          >
+            <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+              Jeu de {{ entry.playerPseudo }}
+            </p>
+            <div
+              v-if="
+                entry.hand.numberCards.length === 0 &&
+                entry.hand.modifiers.length === 0 &&
+                entry.hand.secondChance === null
+              "
+              class="text-xs text-slate-500 italic"
+            >
+              Aucune carte
+            </div>
+            <div v-else class="flex flex-wrap items-center gap-1.5">
+              <CardView
+                v-for="card in entry.hand.numberCards"
+                :key="card.id"
+                :card="card"
+                size="sm"
+              />
+              <CardView
+                v-for="card in entry.hand.modifiers"
+                :key="card.id"
+                :card="card"
+                size="sm"
+              />
+              <CardView
+                v-if="entry.hand.secondChance"
+                :card="entry.hand.secondChance"
+                size="sm"
+              />
+            </div>
           </div>
 
           <div
