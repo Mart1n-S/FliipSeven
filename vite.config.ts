@@ -7,12 +7,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Served under https://mart1n-s.github.io/FliipSeven/ on GitHub Pages.
+  // The router uses hash history, so no 404 fallback is needed.
+  base: '/FliipSeven/',
   plugins: [
     vue(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
       manifest: {
         name: 'Flip 7',
         short_name: 'Flip 7',
@@ -22,7 +25,28 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         lang: 'fr',
-        icons: [],
+        // Set so the manifest works whatever the deployment subpath
+        // (GitHub Pages serves under /FliipSeven/).
+        scope: '/FliipSeven/',
+        start_url: '/FliipSeven/',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
       },
     }),
   ],
