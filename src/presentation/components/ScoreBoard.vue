@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Player } from '@/domain/entities/Player'
+import rulesPdfUrl from '@/presentation/assets/rules/Rules-FliipSeven.pdf?url'
 
 defineProps<{
   roundNumber: number
@@ -10,6 +11,7 @@ defineProps<{
 
 defineEmits<{
   quit: []
+  history: []
 }>()
 </script>
 
@@ -34,6 +36,23 @@ defineEmits<{
         <p class="text-slate-500 uppercase">Défausse</p>
         <p class="text-sm text-slate-200">{{ discardSize }}</p>
       </div>
+      <button
+        type="button"
+        class="rounded-lg border border-slate-700 px-2 py-1.5 font-sans text-xs text-slate-300 transition hover:border-indigo-500 hover:text-indigo-300"
+        aria-label="Voir l'historique de la partie"
+        @click="$emit('history')"
+      >
+        Historique
+      </button>
+      <a
+        :href="rulesPdfUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="rounded-lg border border-slate-700 px-2 py-1.5 font-sans text-xs text-slate-300 transition hover:border-emerald-500 hover:text-emerald-300"
+        aria-label="Ouvrir le PDF des règles"
+      >
+        Règles
+      </a>
       <button
         type="button"
         class="rounded-lg border border-slate-700 px-2 py-1.5 font-sans text-xs text-slate-300 transition hover:border-rose-500 hover:text-rose-400"

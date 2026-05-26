@@ -218,15 +218,96 @@ describe('drawCard: forced draws (Flip Three)', () => {
     expect(next.forcedDraws).toBeNull()
   })
 
-  it('clears forcedDraws as soon as the target busts', () => {
+  it('keeps the sequence running when the target busts (rule book)', () => {
+    // Per the rule book, the three cards are flipped even after the
+    // target busts: the drawn card becomes a duplicate, but the
+    // sequence continues so the remaining flips can still surface
+    // actions (Freeze / Flip Three) that the busted target will
+    // redirect.
     const game = forcedGame(['active', 'active'], [makeNumber(5, 1)], 3, 1, 0, [
       {},
       { numberCards: [makeNumber(5, 0)] },
     ])
     const next = drawCard(deps, game)
 
-    expect(next.forcedDraws).toBeNull()
+    expect(next.forcedDraws).toEqual({ targetIndex: 1, remaining: 2 })
     expect(next.round?.playerStates[1]?.status).toBe<PlayerStatus>('busted')
+  })
+
+  it('discards subsequent Number cards drawn on a busted target', () => {
+    // remaining = 2 means the target already busted (one bust card
+    // was drawn before this call). A new number must NOT join the
+    // row and must go straight to the discard pile.
+    const number = makeNumber(8)
+    const game: GameState = {
+      ...forcedGame(['active', 'active'], [number], 2, 1, 0, [
+        {},
+        { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
+      ]),
+    }
+    const next = drawCard(deps, game)
+
+    expect(next.round?.playerStates[1]?.numberCards).toHaveLength(2)
+    expect(next.discard).toContain(number)
+    expect(next.forcedDraws).toEqual({ targetIndex: 1, remaining: 1 })
+  })
+
+  it('discards Modifier cards drawn on a busted target', () => {
+    const modifier = makeModifier('plus-4')
+    const game: GameState = forcedGame(['active', 'active'], [modifier], 2, 1, 0, [
+      {},
+      { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
+    ])
+    const next = drawCard(deps, game)
+
+    expect(next.round?.playerStates[1]?.modifiers).toEqual([])
+    expect(next.discard).toContain(modifier)
+  })
+
+  it('still queues Action cards drawn on a busted target (origin = busted)', () => {
+    const freeze = makeFreeze()
+    const game: GameState = forcedGame(['active', 'active', 'active'], [freeze], 2, 1, 0, [
+      {},
+      { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
+      {},
+    ])
+    const next = drawCard(deps, game)
+
+    expect(next.actionQueue).toEqual([freeze])
+    expect(next.pendingAction).toBeNull()
+  })
+
+  it('ends the sequence and drains queued actions once `remaining` reaches 0 on a busted target', () => {
+    const freeze = makeFreeze()
+    const game: GameState = {
+      ...forcedGame(['active', 'active', 'active'], [makeNumber(9)], 1, 1, 0, [
+        {},
+        { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
+        {},
+      ]),
+      actionQueue: [freeze],
+    }
+    const next = drawCard(deps, game)
+
+    expect(next.forcedDraws).toBeNull()
+    expect(next.pendingAction).toEqual({ card: freeze, originIndex: 1 })
+    expect(next.actionQueue).toEqual([])
+  })
+
+  it('rotates the active seat off a busted target when the sequence ends', () => {
+    // P2 (active = 1) is the forced target, has already busted, and
+    // is the active seat. When `remaining` hits 0, the active seat
+    // must rotate to the next active player (P3) so the UI does not
+    // park on a busted player.
+    const game: GameState = forcedGame(['active', 'active', 'active'], [makeNumber(9)], 1, 1, 1, [
+      {},
+      { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
+      {},
+    ])
+    const next = drawCard(deps, game)
+
+    expect(next.forcedDraws).toBeNull()
+    expect(next.round?.activePlayerIndex).toBe(2)
   })
 
   it('queues action cards drawn during the sequence (does not set pendingAction)', () => {

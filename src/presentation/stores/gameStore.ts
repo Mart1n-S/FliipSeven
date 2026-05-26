@@ -23,6 +23,13 @@ import { calculateRoundScore } from '@/domain/rules/score'
 import type { CardId } from '@/domain/value-objects/CardId'
 import { LocalStorageGameRepository } from '@/infrastructure/persistence/LocalStorageGameRepository'
 import { CryptoRandomProvider } from '@/infrastructure/random/CryptoRandomProvider'
+import {
+  clearHistory,
+  loadHistory,
+  nowIso,
+  saveHistory,
+  type HistoryEntry,
+} from '@/presentation/stores/history'
 
 interface StoreDeps {
   random: RandomProvider
@@ -102,9 +109,20 @@ export const useGameStore = defineStore('game', () => {
   const lastEvent: Ref<GameEvent | null> = ref(null)
   /** Per-player score earned in the round that just ended. Aligned on `game.players`. */
   const lastRoundScores: Ref<readonly number[] | null> = ref(null)
+  /**
+   * Append-only journal of every meaningful transition. Survives
+   * reloads via localStorage and is intended for dispute resolution.
+   */
+  const history: Ref<HistoryEntry[]> = ref([])
 
   function persist(): void {
     if (game.value !== null) activeDeps.repository.save(game.value)
+    saveHistory(history.value)
+  }
+
+  function appendHistory(...entries: readonly HistoryEntry[]): void {
+    if (entries.length === 0) return
+    history.value = [...history.value, ...entries]
   }
 
   function endRoundIfReady(): void {
@@ -114,11 +132,32 @@ export const useGameStore = defineStore('game', () => {
 
     // Snapshot per-player round scores BEFORE they get folded into totals
     // so the RoundEndView can show the delta for each player.
-    lastRoundScores.value = current.round.playerStates.map(
-      (state) => calculateRoundScore(state).total,
-    )
+    const deltas = current.round.playerStates.map((state) => calculateRoundScore(state).total)
+    lastRoundScores.value = deltas
+
+    const scoresForHistory = current.players.map((player, i) => {
+      const delta = deltas[i] ?? 0
+      return { pseudo: player.pseudo, delta, total: player.totalScore + delta }
+    })
+
     const next = endRound(current)
     game.value = next
+
+    appendHistory({
+      kind: 'round-end',
+      roundNumber: current.roundNumber,
+      scores: scoresForHistory,
+      timestamp: nowIso(),
+    })
+
+    if (next.phase === 'finished') {
+      const winner = next.players.reduce((max, p) => (p.totalScore > max.totalScore ? p : max))
+      appendHistory({
+        kind: 'game-finished',
+        winnerPseudo: winner.pseudo,
+        timestamp: nowIso(),
+      })
+    }
 
     // Only set a generic round-ended / game-finished event if no more
     // specific draw event (bust / flip7 / action-drawn / sc-save) was
@@ -213,6 +252,65 @@ export const useGameStore = defineStore('game', () => {
     return null
   }
 
+  /** Convert a draw transition into 1+ history entries (draw + outcome details). */
+  function buildDrawHistoryEntries(
+    before: GameState,
+    after: GameState,
+    drawnCard: Card | null,
+  ): HistoryEntry[] {
+    if (drawnCard === null || !before.round || !after.round) return []
+
+    const idx = drawerIndex(before)
+    const drawerPseudo = after.players[idx]?.pseudo ?? ''
+    const wasInForcedDraws = before.forcedDraws !== null
+    const wasInDealPhase =
+      !wasInForcedDraws && before.dealQueue !== null && before.dealQueue.length > 0
+
+    const entries: HistoryEntry[] = []
+    entries.push(
+      wasInDealPhase
+        ? { kind: 'deal', playerPseudo: drawerPseudo, card: drawnCard, timestamp: nowIso() }
+        : {
+            kind: 'draw',
+            playerPseudo: drawerPseudo,
+            card: drawnCard,
+            forced: wasInForcedDraws,
+            timestamp: nowIso(),
+          },
+    )
+
+    for (let i = 0; i < after.round.playerStates.length; i += 1) {
+      const prev = before.round.playerStates[i]
+      const curr = after.round.playerStates[i]
+      if (prev === undefined || curr === undefined) continue
+      const pseudo = after.players[i]?.pseudo ?? ''
+
+      if (prev.secondChance !== null && curr.secondChance === null && isNumberCard(drawnCard)) {
+        entries.push({
+          kind: 'sc-save',
+          playerPseudo: pseudo,
+          duplicateValue: drawnCard.value,
+          timestamp: nowIso(),
+        })
+        continue
+      }
+      if (prev.status === 'active' && curr.status === 'busted' && isNumberCard(drawnCard)) {
+        entries.push({
+          kind: 'bust',
+          playerPseudo: pseudo,
+          duplicateValue: drawnCard.value,
+          timestamp: nowIso(),
+        })
+        continue
+      }
+      if (prev.status === 'active' && curr.status === 'flip7') {
+        entries.push({ kind: 'flip7', playerPseudo: pseudo, timestamp: nowIso() })
+      }
+    }
+
+    return entries
+  }
+
   // ----- actions ---------------------------------------------------
 
   /** Hydrate from the persistence layer. Returns whether a game was found. */
@@ -220,14 +318,27 @@ export const useGameStore = defineStore('game', () => {
     const saved = activeDeps.repository.load()
     if (saved === null) return false
     game.value = saved
+    history.value = loadHistory()
     return true
   }
 
   function newGame(pseudos: readonly string[]): void {
-    game.value = startGame({ random: activeDeps.random }, { pseudos })
+    const next = startGame({ random: activeDeps.random }, { pseudos })
+    game.value = next
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    history.value = []
+
+    // Log the first round-start (startGame already opened round 1).
+    if (next.round !== null) {
+      appendHistory({
+        kind: 'round-start',
+        roundNumber: next.roundNumber,
+        dealerPseudo: next.players[next.dealerIndex]?.pseudo ?? '',
+        timestamp: nowIso(),
+      })
+    }
     persist()
   }
 
@@ -238,25 +349,49 @@ export const useGameStore = defineStore('game', () => {
     // use-case and we cannot pre-determine which card will come out; we
     // accept the highlight being skipped for that single draw.
     const topCard = before.deck[0] ?? null
-    game.value = drawCard({ random: activeDeps.random }, before)
+    const after = drawCard({ random: activeDeps.random }, before)
+    game.value = after
     lastDrawnCardId.value = topCard?.id ?? null
-    lastEvent.value = detectEventAfterDraw(before, game.value, topCard)
+    lastEvent.value = detectEventAfterDraw(before, after, topCard)
+    appendHistory(...buildDrawHistoryEntries(before, after, topCard))
     endRoundIfReady()
     persist()
   }
 
   function stay(): void {
-    requireGame()
-    game.value = stayPlayer(game.value as GameState)
+    const before = requireGame()
+    const activeIdx = before.round?.activePlayerIndex ?? 0
+    const activeState = before.round?.playerStates[activeIdx]
+    const playerPseudo = before.players[activeIdx]?.pseudo ?? ''
+    const roundScore = activeState !== undefined ? calculateRoundScore(activeState).total : 0
+
+    game.value = stayPlayer(before)
     lastDrawnCardId.value = null
     lastEvent.value = null
+    appendHistory({ kind: 'stay', playerPseudo, roundScore, timestamp: nowIso() })
     endRoundIfReady()
     persist()
   }
 
   function resolve(targetIndex: number | null): void {
-    requireGame()
-    game.value = resolveAction(game.value as GameState, targetIndex)
+    const before = requireGame()
+    const pending = before.pendingAction
+
+    game.value = resolveAction(before, targetIndex)
+
+    if (pending !== null) {
+      const originPseudo = before.players[pending.originIndex]?.pseudo ?? ''
+      const targetPseudo =
+        targetIndex !== null ? (before.players[targetIndex]?.pseudo ?? null) : null
+      appendHistory({
+        kind: 'action-resolved',
+        card: pending.card,
+        originPseudo,
+        targetPseudo,
+        timestamp: nowIso(),
+      })
+    }
+
     lastDrawnCardId.value = null
     lastEvent.value = null
     endRoundIfReady()
@@ -264,20 +399,31 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function startNextRound(): void {
-    requireGame()
-    game.value = startRound(game.value as GameState)
+    const before = requireGame()
+    const next = startRound(before)
+    game.value = next
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    if (next.round !== null) {
+      appendHistory({
+        kind: 'round-start',
+        roundNumber: next.roundNumber,
+        dealerPseudo: next.players[next.dealerIndex]?.pseudo ?? '',
+        timestamp: nowIso(),
+      })
+    }
     persist()
   }
 
   function reset(): void {
     activeDeps.repository.clear()
+    clearHistory()
     game.value = null
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    history.value = []
   }
 
   function dismissEvent(): void {
@@ -297,6 +443,7 @@ export const useGameStore = defineStore('game', () => {
     lastDrawnCardId,
     lastEvent,
     lastRoundScores,
+    history,
     phase,
     isInRound,
     isBetweenRounds,

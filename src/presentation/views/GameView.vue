@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ActionBar from '@/presentation/components/ActionBar.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import EventBanner from '@/presentation/components/EventBanner.vue'
+import HistoryPanel from '@/presentation/components/HistoryPanel.vue'
 import PlayerRow from '@/presentation/components/PlayerRow.vue'
 import ScoreBoard from '@/presentation/components/ScoreBoard.vue'
 import TargetSelectorModal from '@/presentation/components/TargetSelectorModal.vue'
 import { useActionResolution } from '@/presentation/composables/useActionResolution'
 import { useAutoDeal } from '@/presentation/composables/useAutoDeal'
 import { useGame } from '@/presentation/composables/useGame'
+import { useGameStore } from '@/presentation/stores/gameStore'
 import GameEndView from '@/presentation/views/GameEndView.vue'
 import RoundEndView from '@/presentation/views/RoundEndView.vue'
 
@@ -36,6 +39,8 @@ const {
   reset,
   dismissEvent,
 } = useGame()
+
+const { history } = storeToRefs(useGameStore())
 
 const { choices, requiresUserChoice } = useActionResolution()
 
@@ -65,6 +70,7 @@ const pendingOriginPseudo = computed(() => {
 })
 
 const showQuitConfirm = ref(false)
+const showHistory = ref(false)
 
 function requestQuit() {
   // Only ask if a round is still in progress; once between rounds or
@@ -91,28 +97,31 @@ function quit() {
       :deck-size="game.deck.length"
       :discard-size="game.discard.length"
       @quit="requestQuit"
+      @history="showHistory = true"
     />
 
     <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
     <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
 
-    <!-- Initial deal phase indicator -->
+    <!-- Forced draws banner (also takes priority during the deal phase
+         so a Flip Three triggered while dealing is visible to the user). -->
     <div
-      v-if="isDealPhase && currentDealee && !pendingAction"
-      class="border-b border-emerald-700 bg-emerald-900/40 px-4 py-2 text-sm text-emerald-100"
-    >
-      Distribution en cours - carte pour
-      <span class="font-semibold">{{ currentDealee.pseudo }}</span>
-    </div>
-
-    <!-- Forced draws banner (hidden during pending action or deal phase) -->
-    <div
-      v-else-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
+      v-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
       class="border-b border-indigo-700 bg-indigo-900/40 px-4 py-2 text-sm text-indigo-200"
     >
       <span class="font-semibold">{{ forcedDrawTarget.pseudo }}</span> doit piocher encore
       {{ game.forcedDraws.remaining }}
-      {{ game.forcedDraws.remaining > 1 ? 'cartes' : 'carte' }}.
+      {{ game.forcedDraws.remaining > 1 ? 'cartes' : 'carte' }}
+      <span class="text-indigo-300/70">(Trois à la Suite)</span>.
+    </div>
+
+    <!-- Initial deal phase indicator -->
+    <div
+      v-else-if="isDealPhase && currentDealee && !pendingAction"
+      class="border-b border-emerald-700 bg-emerald-900/40 px-4 py-2 text-sm text-emerald-100"
+    >
+      Distribution en cours - carte pour
+      <span class="font-semibold">{{ currentDealee.pseudo }}</span>
     </div>
 
     <section v-if="game.round" class="flex flex-1 flex-col gap-3 px-4 py-4">
@@ -168,6 +177,8 @@ function quit() {
       @confirm="quit"
       @cancel="showQuitConfirm = false"
     />
+
+    <HistoryPanel v-if="showHistory" :entries="history" @close="showHistory = false" />
   </main>
 
   <main v-else class="flex min-h-full flex-col items-center justify-center gap-4 p-6">
