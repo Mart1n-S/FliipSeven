@@ -7,7 +7,7 @@ const props = withDefaults(
     message: string
     confirmLabel?: string
     cancelLabel?: string
-    /** Style the confirm button as destructive (rose) instead of primary (indigo). */
+    /** Style the confirm button as destructive (rose) instead of primary (cyan). */
     destructive?: boolean
   }>(),
   {
@@ -36,30 +36,32 @@ void props
 
 <template>
   <div
-    class="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/80 p-4 backdrop-blur-sm sm:items-center"
+    class="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
     role="dialog"
     aria-modal="true"
     :aria-label="title"
   >
-    <div class="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+    <div
+      class="w-full max-w-sm rounded-2xl bg-surface-raised p-5 shadow-2xl ring-1 ring-surface-border"
+    >
       <h2 class="text-base font-semibold text-slate-100">{{ title }}</h2>
       <p class="mt-2 text-sm text-slate-400">{{ message }}</p>
 
       <div class="mt-5 flex gap-2">
         <button
           type="button"
-          class="flex-1 rounded-xl border border-slate-700 px-4 py-3 text-base font-semibold text-slate-200 transition hover:border-slate-500 active:scale-95"
+          class="flex-1 rounded-xl bg-surface-base px-4 py-3 text-base font-semibold text-slate-200 ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98]"
           @click="emit('cancel')"
         >
           {{ cancelLabel }}
         </button>
         <button
           type="button"
-          class="flex-1 rounded-xl px-4 py-3 text-base font-semibold text-white shadow-lg transition active:scale-95"
+          class="flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-lg transition active:scale-[0.98]"
           :class="
             destructive
-              ? 'bg-rose-500 shadow-rose-500/30 hover:bg-rose-400'
-              : 'bg-indigo-500 shadow-indigo-500/30 hover:bg-indigo-400'
+              ? 'bg-status-busted text-slate-950 shadow-status-busted/20 hover:brightness-110'
+              : 'bg-status-active text-slate-950 shadow-status-active/20 hover:brightness-110'
           "
           @click="emit('confirm')"
         >

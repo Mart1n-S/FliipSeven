@@ -39,24 +39,24 @@ const style = computed<BannerStyle>(() => {
         tag: 'Bust',
         headline: `${e.playerPseudo} explose`,
         sub: `Doublon de ${e.duplicateCard.value} - toutes ses cartes sont défaussées`,
-        accent: 'bg-[--color-status-busted]',
-        tagClasses: 'text-[--color-status-busted]',
+        accent: 'bg-status-busted',
+        tagClasses: 'text-status-busted',
       }
     case 'flip7':
       return {
         tag: 'Flip 7',
         headline: `${e.playerPseudo} réussit le Flip 7`,
         sub: `7 cartes uniques, +15 points bonus`,
-        accent: 'bg-[--color-status-flip7]',
-        tagClasses: 'text-[--color-status-flip7]',
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7',
       }
     case 'frozen':
       return {
         tag: 'Gel',
         headline: `${e.playerPseudo} gelé`,
         sub: 'Ses points du tour sont perdus',
-        accent: 'bg-[--color-status-frozen]',
-        tagClasses: 'text-[--color-status-frozen]',
+        accent: 'bg-status-frozen',
+        tagClasses: 'text-status-frozen',
       }
     case 'second-chance-save':
       return {
@@ -71,8 +71,8 @@ const style = computed<BannerStyle>(() => {
         tag: 'Carte action',
         headline: `${e.playerPseudo} pioche un ${ACTION_LABEL[e.card.action]}`,
         sub: 'En attente de résolution',
-        accent: 'bg-[--color-status-flip7]',
-        tagClasses: 'text-[--color-status-flip7]',
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7',
       }
     case 'round-ended':
       return {
@@ -87,8 +87,8 @@ const style = computed<BannerStyle>(() => {
         tag: 'Partie',
         headline: 'Partie terminée',
         sub: 'Le classement final est prêt',
-        accent: 'bg-[--color-status-flip7]',
-        tagClasses: 'text-[--color-status-flip7]',
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7',
       }
     default: {
       const _exhaustive: never = e
@@ -106,7 +106,7 @@ const style = computed<BannerStyle>(() => {
 
 <template>
   <output
-    class="relative mx-4 mt-3 block overflow-hidden rounded-2xl bg-[--color-surface-raised] pr-3 pl-4 ring-1 ring-[--color-surface-border]"
+    class="relative mx-4 mt-3 block overflow-hidden rounded-2xl bg-surface-raised pr-3 pl-4 ring-1 ring-surface-border"
   >
     <!-- Vertical accent bar on the left. -->
     <span class="absolute top-0 bottom-0 left-0 w-1" :class="style.accent" aria-hidden="true" />
@@ -140,7 +140,7 @@ const style = computed<BannerStyle>(() => {
 
       <button
         type="button"
-        class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-[--color-surface-overlay] hover:text-slate-200"
+        class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-surface-overlay hover:text-slate-200"
         aria-label="Fermer la bannière"
         @click="$emit('dismiss')"
       >

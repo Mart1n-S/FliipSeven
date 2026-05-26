@@ -18,13 +18,13 @@ defineEmits<{
 
 <template>
   <header
-    class="sticky top-0 z-10 border-b border-[--color-surface-border] bg-[--color-surface-base]/95 px-4 pt-3 pb-4 backdrop-blur"
+    class="sticky top-0 z-10 border-b border-surface-border bg-surface-base/95 px-4 pt-3 pb-4 backdrop-blur"
   >
     <!-- Top row : Manche + Donneur + icon buttons -->
     <div class="flex items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-2">
         <span
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[--color-surface-raised] px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase ring-1 ring-[--color-surface-border]"
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-surface-raised px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase ring-1 ring-surface-border"
         >
           <span class="text-slate-500">Manche</span>
           <span class="font-mono text-slate-200 tabular-nums">{{
@@ -35,7 +35,7 @@ defineEmits<{
         <div v-if="dealer" class="flex min-w-0 items-center gap-1.5">
           <span class="shrink-0 text-[11px] text-slate-500">Donneur</span>
           <span
-            class="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-[--color-surface-raised] py-0.5 pr-2.5 pl-1 ring-1 ring-[--color-surface-border]"
+            class="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-surface-raised py-0.5 pr-2.5 pl-1 ring-1 ring-surface-border"
           >
             <Avatar :pseudo="dealer.pseudo" size="sm" />
             <span class="truncate text-xs font-medium text-slate-200">{{ dealer.pseudo }}</span>
@@ -46,7 +46,7 @@ defineEmits<{
       <div class="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-[--color-surface-raised] hover:text-slate-200"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
           aria-label="Voir l'historique de la partie"
           @click="$emit('history')"
         >
@@ -70,7 +70,7 @@ defineEmits<{
           :href="rulesPdfUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-[--color-surface-raised] hover:text-slate-200"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
           aria-label="Ouvrir le PDF des règles"
         >
           <!-- info (i) -->
@@ -91,7 +91,7 @@ defineEmits<{
 
         <button
           type="button"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-[--color-surface-raised] hover:text-rose-400"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-rose-400"
           aria-label="Quitter la partie"
           @click="$emit('quit')"
         >
@@ -114,7 +114,7 @@ defineEmits<{
     <!-- Stats tiles : pioche + défausse -->
     <div class="mt-3 grid grid-cols-2 gap-2">
       <div
-        class="relative overflow-hidden rounded-xl bg-[--color-surface-raised] px-3 py-2.5 ring-1 ring-[--color-surface-border]"
+        class="relative overflow-hidden rounded-xl bg-surface-raised px-3 py-2.5 ring-1 ring-surface-border"
       >
         <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Pioche</p>
         <p class="mt-0.5 font-mono text-2xl font-bold text-slate-100 tabular-nums">
@@ -134,7 +134,7 @@ defineEmits<{
       </div>
 
       <div
-        class="relative overflow-hidden rounded-xl bg-[--color-surface-raised] px-3 py-2.5 ring-1 ring-[--color-surface-border]"
+        class="relative overflow-hidden rounded-xl bg-surface-raised px-3 py-2.5 ring-1 ring-surface-border"
       >
         <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Défausse</p>
         <p class="mt-0.5 font-mono text-2xl font-bold text-slate-100 tabular-nums">

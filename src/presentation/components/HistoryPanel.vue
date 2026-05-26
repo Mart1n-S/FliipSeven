@@ -65,43 +65,62 @@ function describe(entry: HistoryEntry): string {
   }
 }
 
+/**
+ * Color accent per entry kind. Mirrors the status palette used in
+ * StatusBadge / EventBanner so the journal feels visually consistent
+ * with the rest of the game.
+ */
 const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
   'round-start': 'text-emerald-300',
-  deal: 'text-slate-400',
+  deal: 'text-slate-500',
   draw: 'text-slate-300',
-  bust: 'text-rose-400',
-  flip7: 'text-amber-300',
-  frozen: 'text-sky-400',
+  bust: 'text-status-busted',
+  flip7: 'text-status-flip7',
+  frozen: 'text-status-frozen',
   'sc-save': 'text-emerald-300',
-  stay: 'text-sky-300',
-  'action-resolved': 'text-amber-300',
+  stay: 'text-status-active',
+  'action-resolved': 'text-status-flip7',
   'round-end': 'text-indigo-300',
-  'game-finished': 'text-amber-300',
+  'game-finished': 'text-status-flip7',
 }
 </script>
 
 <template>
   <div
-    class="fixed inset-0 z-30 flex items-stretch justify-end bg-slate-950/60 backdrop-blur-sm"
+    class="fixed inset-0 z-30 flex items-stretch justify-end bg-slate-950/70 backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
     aria-label="Historique de la partie"
     @click.self="$emit('close')"
   >
     <aside
-      class="flex h-full w-full max-w-md flex-col border-l border-slate-800 bg-slate-900 shadow-xl"
+      class="flex h-full w-full max-w-md flex-col border-l border-surface-border bg-surface-base shadow-2xl"
     >
-      <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+      <header class="flex items-center justify-between border-b border-surface-border px-4 py-3">
         <div>
+          <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Journal</p>
           <h2 class="text-base font-semibold text-slate-100">Historique</h2>
-          <p class="text-xs text-slate-400">{{ entries.length }} évènement(s)</p>
+          <p class="mt-0.5 font-mono text-xs text-slate-500 tabular-nums">
+            {{ entries.length }} évènement{{ entries.length > 1 ? 's' : '' }}
+          </p>
         </div>
         <button
           type="button"
-          class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
+          aria-label="Fermer le journal"
           @click="$emit('close')"
         >
-          Fermer
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="size-5"
+            aria-hidden="true"
+          >
+            <path
+              d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+            />
+          </svg>
         </button>
       </header>
 
@@ -112,7 +131,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
         Aucun évènement pour l'instant.
       </div>
 
-      <ol v-else class="flex-1 divide-y divide-slate-800 overflow-y-auto">
+      <ol v-else class="flex-1 divide-y divide-surface-border overflow-y-auto">
         <li
           v-for="(entry, i) in reversedEntries"
           :key="`${entry.timestamp}-${i}`"
@@ -146,7 +165,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
               entry.kind === 'flip7' ||
               entry.kind === 'frozen'
             "
-            class="mt-2 rounded-md border border-slate-800 bg-slate-950/40 p-2"
+            class="mt-2 rounded-lg bg-surface-raised p-2 ring-1 ring-surface-border"
           >
             <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
               Jeu de {{ entry.playerPseudo }}

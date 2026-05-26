@@ -42,18 +42,18 @@ const sizeClass = computed(() => {
  * cyan ring to dominate.
  */
 const stateClass = computed(() => {
-  if (props.active) return 'ring-2 ring-[--color-status-active]'
+  if (props.active) return 'ring-2 ring-status-active'
   switch (props.status) {
     case 'busted':
-      return 'opacity-50 ring-1 ring-[--color-status-busted]/40'
+      return 'opacity-50 ring-1 ring-status-busted/40'
     case 'frozen':
-      return 'opacity-70 ring-1 ring-[--color-status-frozen]/40'
+      return 'opacity-70 ring-1 ring-status-frozen/40'
     case 'stayed':
-      return 'ring-1 ring-[--color-surface-border]'
+      return 'ring-1 ring-surface-border'
     case 'flip7':
-      return 'ring-2 ring-[--color-status-flip7]'
+      return 'ring-2 ring-status-flip7'
     default:
-      return 'ring-1 ring-[--color-surface-border]'
+      return 'ring-1 ring-surface-border'
   }
 })
 </script>
@@ -61,7 +61,7 @@ const stateClass = computed(() => {
 <template>
   <div
     :class="[sizeClass, stateClass]"
-    class="flex shrink-0 items-center justify-center rounded-full bg-[--color-surface-raised] font-mono font-medium tracking-wider text-slate-200 select-none"
+    class="flex shrink-0 items-center justify-center rounded-full bg-surface-raised font-mono font-medium tracking-wider text-slate-200 select-none"
     aria-hidden="true"
   >
     {{ initials }}

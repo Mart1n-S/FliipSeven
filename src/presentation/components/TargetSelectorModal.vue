@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ActionCard } from '@/domain/entities/Card'
+import Avatar from '@/presentation/components/Avatar.vue'
 import CardView from '@/presentation/components/CardView.vue'
 import type { TargetChoice } from '@/presentation/composables/useActionResolution'
 
@@ -14,28 +15,36 @@ defineEmits<{
   select: [index: number]
 }>()
 
-const promptByAction = computed(() => {
+interface Prompt {
+  readonly title: string
+  readonly subtitle: string
+  readonly cardLabel: string
+}
+
+const promptByAction = computed<Prompt>(() => {
   const action = props.card.action
   switch (action) {
     case 'freeze':
       return {
-        title: 'Choisir une cible - Gel',
-        subtitle: `${props.originPseudo} doit choisir le joueur à geler.`,
+        title: 'Cibler un joueur',
+        subtitle: `${props.originPseudo} doit choisir qui geler`,
+        cardLabel: 'Carte Gel · ses points du tour sont perdus',
       }
     case 'flip-three':
       return {
-        title: 'Choisir une cible - Trois à la Suite',
-        subtitle: `${props.originPseudo} doit choisir le joueur qui pioche 3 cartes.`,
+        title: 'Cibler un joueur',
+        subtitle: `${props.originPseudo} doit choisir qui pioche 3 cartes`,
+        cardLabel: 'Carte Trois à la Suite · 3 cartes forcées',
       }
     case 'second-chance':
       return {
         title: 'Donner la Seconde Chance',
-        subtitle: `${props.originPseudo} doit donner sa Seconde Chance à un autre joueur actif.`,
+        subtitle: `${props.originPseudo} doit transmettre sa Seconde Chance`,
+        cardLabel: 'Carte Seconde Chance · protège d’un doublon',
       }
     default: {
-      // Exhaustive: TS will error here if a new ActionKind is added.
       const _exhaustive: never = action
-      return { title: String(_exhaustive), subtitle: '' }
+      return { title: String(_exhaustive), subtitle: '', cardLabel: '' }
     }
   }
 })
@@ -43,31 +52,48 @@ const promptByAction = computed(() => {
 
 <template>
   <div
-    class="fixed inset-0 z-30 flex items-end justify-center bg-slate-950/80 p-4 backdrop-blur-sm sm:items-center"
+    class="fixed inset-0 z-30 flex items-end justify-center bg-slate-950/70 backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
     :aria-label="promptByAction.title"
   >
-    <div class="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
-      <header class="flex items-start gap-3">
+    <div
+      class="w-full max-w-md rounded-t-3xl border-t border-x border-surface-border bg-surface-base pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl"
+    >
+      <!-- Drag handle (purely decorative on web; no swipe-to-dismiss). -->
+      <div class="flex justify-center pt-2.5 pb-1">
+        <span class="block h-1 w-10 rounded-full bg-slate-700" aria-hidden="true" />
+      </div>
+
+      <header class="flex items-start gap-3 px-5 pt-3 pb-4">
         <CardView :card="card" size="md" />
         <div class="min-w-0 flex-1">
-          <h2 class="text-base font-semibold text-slate-100">
+          <h2 class="truncate text-lg font-semibold text-slate-100">
             {{ promptByAction.title }}
           </h2>
-          <p class="mt-1 text-sm text-slate-400">{{ promptByAction.subtitle }}</p>
+          <p class="mt-0.5 truncate text-sm text-slate-400">
+            {{ promptByAction.subtitle }}
+          </p>
+          <p class="mt-1.5 text-xs text-slate-500">
+            {{ promptByAction.cardLabel }}
+          </p>
         </div>
       </header>
 
-      <ul class="mt-4 flex flex-col gap-2">
+      <ul class="flex flex-col gap-2 px-3 pb-3">
         <li v-for="choice in choices" :key="choice.index">
           <button
             type="button"
-            class="flex w-full items-center justify-between rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-left text-slate-100 transition hover:border-indigo-400 hover:bg-slate-800/80 active:scale-[0.98]"
+            class="flex w-full items-center gap-3 rounded-xl bg-surface-raised px-3 py-3 text-left ring-1 ring-surface-border transition hover:bg-surface-overlay hover:ring-status-active active:scale-[0.99]"
             @click="$emit('select', choice.index)"
           >
-            <span class="font-medium">{{ choice.pseudo }}</span>
-            <span class="text-xs text-slate-400">Choisir</span>
+            <Avatar :pseudo="choice.pseudo" size="sm" />
+            <span class="flex-1 truncate text-sm font-medium text-slate-100">{{
+              choice.pseudo
+            }}</span>
+            <span class="font-mono text-sm font-semibold text-slate-300 tabular-nums">
+              {{ choice.roundScore }}
+            </span>
           </button>
         </li>
       </ul>

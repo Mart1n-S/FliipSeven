@@ -25,15 +25,15 @@ const roundScore = computed(() => (props.state ? calculateRoundScore(props.state
  * eye jump to whoever is about to play.
  */
 const scoreColor = computed(() => {
-  if (props.isActive) return 'text-[--color-status-active]'
+  if (props.isActive) return 'text-status-active'
   if (props.state === null) return 'text-slate-100'
   switch (props.state.status) {
     case 'busted':
       return 'text-slate-600 line-through decoration-1'
     case 'frozen':
-      return 'text-[--color-status-frozen]'
+      return 'text-status-frozen'
     case 'flip7':
-      return 'text-[--color-status-flip7]'
+      return 'text-status-flip7'
     case 'stayed':
     case 'active':
     default:
@@ -51,18 +51,18 @@ const scoreColor = computed(() => {
  */
 const containerClass = computed(() => {
   if (props.isActive) {
-    return 'bg-[--color-surface-raised] ring-2 ring-[--color-status-active] shadow-lg shadow-[--color-status-active]/10'
+    return 'bg-surface-raised ring-2 ring-status-active shadow-lg shadow-status-active/10'
   }
   if (props.state?.status === 'busted') {
-    return 'bg-[--color-surface-base] ring-1 ring-[--color-surface-border]/60 opacity-70'
+    return 'bg-surface-base ring-1 ring-surface-border/60 opacity-70'
   }
   if (props.state?.status === 'frozen') {
-    return 'bg-[--color-surface-base] ring-1 ring-[--color-status-frozen]/30 opacity-80'
+    return 'bg-surface-base ring-1 ring-status-frozen/30 opacity-80'
   }
   if (props.state?.status === 'flip7') {
-    return 'bg-[--color-surface-raised] ring-2 ring-[--color-status-flip7]'
+    return 'bg-surface-raised ring-2 ring-status-flip7'
   }
-  return 'bg-[--color-surface-raised] ring-1 ring-[--color-surface-border]'
+  return 'bg-surface-raised ring-1 ring-surface-border'
 })
 
 const nameClass = computed(() => {
@@ -99,7 +99,7 @@ const isEmpty = computed(
           <StatusBadge v-if="state" :status="state.status" />
           <span
             v-if="isDealer"
-            class="inline-flex items-center rounded-md bg-[--color-surface-overlay] px-2 py-0.5 text-[10px] font-semibold tracking-wider text-slate-400 uppercase ring-1 ring-[--color-surface-border]"
+            class="inline-flex items-center rounded-md bg-surface-overlay px-2 py-0.5 text-[10px] font-semibold tracking-wider text-slate-400 uppercase ring-1 ring-surface-border"
             title="Donneur de cette manche"
           >
             Donneur

@@ -1,11 +1,15 @@
 import { computed, onBeforeUnmount, watch } from 'vue'
 import { isSecondChanceCard } from '@/domain/entities/Card'
 import { getValidActionTargets } from '@/domain/rules/actions/targets'
+import { calculateRoundScore } from '@/domain/rules/score'
 import { useGameStore } from '@/presentation/stores/gameStore'
 
 export interface TargetChoice {
   readonly index: number
   readonly pseudo: string
+  /** Provisional round score of the target, surfaced in the modal so
+   *  the origin can pick informed (eg. gel the leading player). */
+  readonly roundScore: number
 }
 
 /**
@@ -42,10 +46,13 @@ export function useActionResolution() {
     const pending = store.pendingAction
     if (game === null || game.round === null || pending === null) return []
 
-    return getValidActionTargets(pending.card, game.round.playerStates, pending.originIndex)
+    const round = game.round
+    return getValidActionTargets(pending.card, round.playerStates, pending.originIndex)
       .map((index) => {
         const pseudo = game.players[index]?.pseudo
-        return pseudo !== undefined ? { index, pseudo } : null
+        const state = round.playerStates[index]
+        if (pseudo === undefined || state === undefined) return null
+        return { index, pseudo, roundScore: calculateRoundScore(state).total }
       })
       .filter((c): c is TargetChoice => c !== null)
   })

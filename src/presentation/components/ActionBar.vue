@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 <template>
   <footer
-    class="sticky bottom-0 z-10 border-t border-[--color-surface-border] bg-[--color-surface-base]/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur"
+    class="sticky bottom-0 z-10 border-t border-surface-border bg-surface-base/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur"
   >
     <!-- Current player chip : avatar + pseudo + label.
          Keeps the eye on the right seat even when scrolled to the bottom
@@ -30,7 +30,7 @@ const emit = defineEmits<{
     <div class="flex gap-2">
       <button
         type="button"
-        class="flex-1 rounded-xl bg-[--color-surface-raised] px-4 py-3.5 text-base font-semibold text-slate-200 ring-1 ring-[--color-surface-border] transition hover:ring-slate-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:ring-[--color-surface-border]"
+        class="flex-1 rounded-xl bg-surface-raised px-4 py-3.5 text-base font-semibold text-slate-200 ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:ring-surface-border"
         :disabled="disabled"
         @click="emit('stay')"
       >
@@ -38,7 +38,7 @@ const emit = defineEmits<{
       </button>
       <button
         type="button"
-        class="flex-[1.2] rounded-xl bg-[--color-status-active] px-4 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-[--color-status-active]/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
+        class="flex-[1.2] rounded-xl bg-status-active px-4 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
         :disabled="disabled"
         @click="emit('draw')"
       >
