@@ -1,15 +1,10 @@
 import { shuffle } from '@/domain/deck/shuffle'
-import {
-  isActionCard,
-  isModifierCard,
-  isNumberCard,
-  type ActionCard,
-  type Card,
-} from '@/domain/entities/Card'
+import { isActionCard, isModifierCard, isNumberCard, type Card } from '@/domain/entities/Card'
 import type {
   ForcedDrawsContext,
   GameState,
   PendingActionContext,
+  QueuedAction,
 } from '@/domain/entities/GameState'
 import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { nextActivePlayerIndex, type RoundState } from '@/domain/entities/RoundState'
@@ -25,7 +20,7 @@ export interface DrawCardDeps {
 interface CardApplication {
   readonly updatedTargetState: PlayerRoundState
   readonly discardAdditions: readonly Card[]
-  readonly queueAddition: ActionCard | null
+  readonly queueAddition: QueuedAction | null
   readonly immediatePendingAction: PendingActionContext | null
 }
 
@@ -33,7 +28,7 @@ interface CardApplication {
 interface ForcedProgression {
   readonly newForcedDraws: ForcedDrawsContext | null
   readonly newPendingAction: PendingActionContext | null
-  readonly newActionQueue: readonly ActionCard[]
+  readonly newActionQueue: readonly QueuedAction[]
 }
 
 /**
@@ -108,12 +103,7 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
     i === targetIndex ? application.updatedTargetState : s,
   )
 
-  const progression = advanceForcedDraws(
-    game.forcedDraws,
-    game.actionQueue,
-    application,
-    targetIndex,
-  )
+  const progression = advanceForcedDraws(game.forcedDraws, game.actionQueue, application)
 
   const intermediateRound: RoundState = { ...round, playerStates: newPlayerStates }
   const newRound = computeNewRound({
@@ -211,7 +201,7 @@ function applyCardToTarget(
     return {
       updatedTargetState: targetState,
       discardAdditions: [],
-      queueAddition: wasInForcedDraws ? card : null,
+      queueAddition: wasInForcedDraws ? { card, originIndex: targetIndex } : null,
       immediatePendingAction: wasInForcedDraws ? null : { card, originIndex: targetIndex },
     }
   }
@@ -246,11 +236,10 @@ function discardOnly(targetState: PlayerRoundState, card: Card): CardApplication
  */
 function advanceForcedDraws(
   forced: ForcedDrawsContext | null,
-  queue: readonly ActionCard[],
+  queue: readonly QueuedAction[],
   application: CardApplication,
-  targetIndex: number,
 ): ForcedProgression {
-  const baseQueue: readonly ActionCard[] =
+  const baseQueue: readonly QueuedAction[] =
     application.queueAddition === null ? queue : [...queue, application.queueAddition]
 
   if (forced === null) {
@@ -273,13 +262,16 @@ function advanceForcedDraws(
     }
   }
 
-  // Sequence over - drain one queued action if any.
+  // Sequence over - drain one queued action if any. Each queued
+  // action carries its own `originIndex` (= the player whose sequence
+  // produced it), so a Freeze queued during P2's sequence is still
+  // resolved by P2 even after a sub-sequence has run.
   if (application.immediatePendingAction === null && baseQueue.length > 0) {
-    const [head, ...rest] = baseQueue
+    const head = baseQueue[0] as QueuedAction
     return {
       newForcedDraws: null,
-      newPendingAction: { card: head as ActionCard, originIndex: targetIndex },
-      newActionQueue: rest,
+      newPendingAction: { card: head.card, originIndex: head.originIndex },
+      newActionQueue: baseQueue.slice(1),
     }
   }
 

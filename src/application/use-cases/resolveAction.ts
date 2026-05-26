@@ -1,4 +1,4 @@
-import type { ActionCard, Card, FreezeCard } from '@/domain/entities/Card'
+import type { Card, FreezeCard } from '@/domain/entities/Card'
 import {
   isFlipThreeCard,
   isFreezeCard,
@@ -6,7 +6,11 @@ import {
   type FlipThreeCard,
   type SecondChanceCard,
 } from '@/domain/entities/Card'
-import type { GameState, PendingActionContext } from '@/domain/entities/GameState'
+import type {
+  GameState,
+  PendingActionContext,
+  QueuedAction,
+} from '@/domain/entities/GameState'
 import { nextActivePlayerIndex, type RoundState } from '@/domain/entities/RoundState'
 import { applyFlipThree } from '@/domain/rules/actions/flipThree'
 import { applyFreeze } from '@/domain/rules/actions/freeze'
@@ -77,12 +81,23 @@ export function resolveAction(game: GameState, targetIndex: number | null): Game
   }
 
   // Drain one queued action into the next pendingAction (if any).
+  //
+  // Two important subtleties here:
+  //  1. We do NOT drain while `newForcedDraws` is non-null - a Flip
+  //     Three we just resolved is about to start a sub-sequence, and
+  //     subsequent queued actions must wait for that sub-sequence to
+  //     end. Otherwise a second Flip Three in the queue would overwrite
+  //     the first sub-sequence's target.
+  //  2. Each queued action carries its own `originIndex` (snapshot of
+  //     who produced it). We use THAT, not `pending.originIndex`, so a
+  //     Freeze queued during P2's sequence is still resolved by P2
+  //     even if a sub-sequence on X ran in between.
   let newPendingAction: PendingActionContext | null = null
-  let newActionQueue: readonly ActionCard[] = game.actionQueue
-  if (newActionQueue.length > 0) {
-    const [head, ...rest] = newActionQueue
-    newPendingAction = { card: head as ActionCard, originIndex: pending.originIndex }
-    newActionQueue = rest
+  let newActionQueue: readonly QueuedAction[] = game.actionQueue
+  if (newForcedDraws === null && newActionQueue.length > 0) {
+    const head = newActionQueue[0] as QueuedAction
+    newPendingAction = { card: head.card, originIndex: head.originIndex }
+    newActionQueue = newActionQueue.slice(1)
   }
 
   const intermediate: RoundState = { ...round, playerStates: newPlayerStates }

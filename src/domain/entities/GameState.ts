@@ -14,6 +14,19 @@ export interface PendingActionContext {
 }
 
 /**
+ * One element of the deferred-action queue.
+ *
+ * `originIndex` is captured at the moment the card is queued (= the
+ * recipient or busted target of the Flip Three sequence in which the
+ * card surfaced). It is preserved across sub-sequences so the right
+ * player ends up choosing the target, per the rule book.
+ */
+export interface QueuedAction {
+  readonly card: ActionCard
+  readonly originIndex: number
+}
+
+/**
  * A Flip Three sequence is in progress: the chosen target must keep
  * accepting cards until `remaining` falls to 0, the target busts, or
  * reaches Flip 7.
@@ -53,9 +66,12 @@ export interface GameState {
   /**
    * Action cards drawn during a Flip Three sequence, queued for
    * resolution once the sequence ends. Drained one at a time into
-   * `pendingAction`.
+   * `pendingAction`. Each element carries its own `originIndex` so a
+   * Freeze queued during P2's sequence is always resolved by P2,
+   * even if a Flip Three from the same queue triggers a sub-sequence
+   * on a different player in between.
    */
-  readonly actionQueue: readonly ActionCard[]
+  readonly actionQueue: readonly QueuedAction[]
   /**
    * Players still to receive their initial-deal card at round start.
    * The HEAD of the array is the current dealee (their draw / action

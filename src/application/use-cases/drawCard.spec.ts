@@ -273,7 +273,9 @@ describe('drawCard: forced draws (Flip Three)', () => {
     ])
     const next = drawCard(deps, game)
 
-    expect(next.actionQueue).toEqual([freeze])
+    // Queued with `originIndex = 1` (P2, the busted target). The
+    // busted player keeps the choice for this Freeze per the rules.
+    expect(next.actionQueue).toEqual([{ card: freeze, originIndex: 1 }])
     expect(next.pendingAction).toBeNull()
   })
 
@@ -285,7 +287,7 @@ describe('drawCard: forced draws (Flip Three)', () => {
         { numberCards: [makeNumber(5, 0), makeNumber(5, 1)], status: 'busted' },
         {},
       ]),
-      actionQueue: [freeze],
+      actionQueue: [{ card: freeze, originIndex: 1 }],
     }
     const next = drawCard(deps, game)
 
@@ -316,14 +318,15 @@ describe('drawCard: forced draws (Flip Three)', () => {
     const next = drawCard(deps, game)
 
     expect(next.pendingAction).toBeNull()
-    expect(next.actionQueue).toEqual([freeze])
+    // Queued with the forced target's index as `originIndex`.
+    expect(next.actionQueue).toEqual([{ card: freeze, originIndex: 1 }])
   })
 
   it('drains the queue into pendingAction when forcedDraws end with queued actions', () => {
     const freeze = makeFreeze()
     const game: GameState = {
       ...forcedGame(['active', 'active'], [makeNumber(7)], 1, 1),
-      actionQueue: [freeze],
+      actionQueue: [{ card: freeze, originIndex: 1 }],
     }
     const next = drawCard(deps, game)
 
@@ -340,6 +343,25 @@ describe('drawCard: forced draws (Flip Three)', () => {
     const next = drawCard(deps, game)
 
     expect(next.round?.activePlayerIndex).toBe(0)
+  })
+
+  it('preserves each queued action’s own originIndex across multiple draws', () => {
+    // Mid-sequence: one Freeze is already queued (originIndex = 0,
+    // from an earlier sequence). The next forced draw pulls another
+    // Freeze on a different target (1). The queue must contain BOTH
+    // freezes, each with the correct originIndex.
+    const earlierFreeze = makeFreeze(0)
+    const newFreeze = makeFreeze(1)
+    const game: GameState = {
+      ...forcedGame(['active', 'active', 'active'], [newFreeze], 3, 1),
+      actionQueue: [{ card: earlierFreeze, originIndex: 0 }],
+    }
+    const next = drawCard(deps, game)
+
+    expect(next.actionQueue).toEqual([
+      { card: earlierFreeze, originIndex: 0 },
+      { card: newFreeze, originIndex: 1 },
+    ])
   })
 })
 

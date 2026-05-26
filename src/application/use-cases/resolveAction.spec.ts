@@ -184,11 +184,14 @@ describe('resolveAction: queue draining', () => {
     const game: GameState = {
       ...inProgressGame(['active', 'active']),
       pendingAction: { card: makeFreeze(0), originIndex: 0 },
-      actionQueue: [nextAction],
+      actionQueue: [{ card: nextAction, originIndex: 0 }],
     }
 
     const next = resolveAction(game, 1)
 
+    // The queued action's own `originIndex` is used (not propagated
+    // from the just-resolved pending), so a Freeze queued earlier by
+    // P0 stays owned by P0.
     expect(next.pendingAction).toEqual({ card: nextAction, originIndex: 0 })
     expect(next.actionQueue).toEqual([])
   })
@@ -199,13 +202,16 @@ describe('resolveAction: queue draining', () => {
     const game: GameState = {
       ...inProgressGame(['active', 'active']),
       pendingAction: { card: makeFreeze(0), originIndex: 0 },
-      actionQueue: [a1, a2],
+      actionQueue: [
+        { card: a1, originIndex: 0 },
+        { card: a2, originIndex: 0 },
+      ],
     }
 
     const next = resolveAction(game, 1)
 
     expect(next.pendingAction?.card).toBe(a1)
-    expect(next.actionQueue).toEqual([a2])
+    expect(next.actionQueue).toEqual([{ card: a2, originIndex: 0 }])
   })
 
   it('does not hand the turn over while another action is still pending', () => {
@@ -214,13 +220,51 @@ describe('resolveAction: queue draining', () => {
     const game: GameState = {
       ...inProgressGame(['active', 'active']),
       pendingAction: { card: makeFreeze(), originIndex: 0 },
-      actionQueue: [makeFreeze(1)],
+      actionQueue: [{ card: makeFreeze(1), originIndex: 0 }],
     }
 
     const next = resolveAction(game, 0)
 
     expect(next.round?.playerStates[0]?.status).toBe<PlayerStatus>('frozen')
     expect(next.round?.activePlayerIndex).toBe(0) // unchanged: queue not drained
+  })
+
+  it('keeps queued actions in the queue when the resolution starts a sub-sequence', () => {
+    // A Flip Three is being resolved while a Freeze (from the same
+    // earlier sequence) is still queued. We MUST not drain the Freeze
+    // now - it has to wait for the new sub-sequence to end, otherwise
+    // the next Flip Three resolution would overwrite the sub-sequence.
+    const queuedFreeze = makeFreeze(1)
+    const game: GameState = {
+      ...inProgressGame(['active', 'active', 'active']),
+      pendingAction: { card: makeFlipThree(0), originIndex: 0 },
+      actionQueue: [{ card: queuedFreeze, originIndex: 0 }],
+    }
+
+    const next = resolveAction(game, 1)
+
+    expect(next.forcedDraws).toEqual({ targetIndex: 1, remaining: 3 })
+    expect(next.pendingAction).toBeNull()
+    expect(next.actionQueue).toEqual([{ card: queuedFreeze, originIndex: 0 }])
+  })
+
+  it('preserves the queued action’s own originIndex across a sub-sequence', () => {
+    // Simulates the state right AFTER a Flip Three sub-sequence ended:
+    // a Freeze is on top of the queue, originally queued by P0 during
+    // P0's earlier sequence. The current resolveAction is for a Freeze
+    // that target X just chose; once it resolves, the queue head must
+    // drain with origin = 0 (P0), not = X.
+    const queuedFreeze = makeFreeze(2)
+    const game: GameState = {
+      ...inProgressGame(['active', 'active', 'active']),
+      pendingAction: { card: makeFreeze(1), originIndex: 2 },
+      actionQueue: [{ card: queuedFreeze, originIndex: 0 }],
+    }
+
+    const next = resolveAction(game, 0)
+
+    expect(next.pendingAction).toEqual({ card: queuedFreeze, originIndex: 0 })
+    expect(next.actionQueue).toEqual([])
   })
 })
 
