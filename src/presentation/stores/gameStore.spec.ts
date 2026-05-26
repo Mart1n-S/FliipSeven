@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { GameRepository } from '@/application/ports/GameRepository'
-import type { NumberCard, SecondChanceCard } from '@/domain/entities/Card'
+import type { FreezeCard, NumberCard, SecondChanceCard } from '@/domain/entities/Card'
 import type { GameState } from '@/domain/entities/GameState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
 import { createCardId } from '@/domain/value-objects/CardId'
@@ -196,6 +196,78 @@ describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
     store.startNextRound()
 
     expect(store.lastRoundScores).toBeNull()
+  })
+
+  it('emits an enriched bust event carrying the duplicate card that caused the loss', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const duplicate: NumberCard = {
+      id: createCardId('number-7-1'),
+      kind: 'number',
+      value: 7,
+    }
+    const existing: NumberCard = {
+      id: createCardId('number-7-0'),
+      kind: 'number',
+      value: 7,
+    }
+
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [duplicate, ...baseGame.deck],
+        dealQueue: null,
+        round: {
+          ...round,
+          activePlayerIndex: 0,
+          playerStates: round.playerStates.map((s, i) =>
+            i === 0 ? { ...s, numberCards: [existing] } : s,
+          ),
+        },
+      },
+    })
+
+    store.draw()
+
+    expect(store.lastEvent).toMatchObject({
+      kind: 'bust',
+      playerIndex: 0,
+      duplicateCard: { id: duplicate.id, value: 7 },
+    })
+    expect(store.game?.round?.playerStates[0]?.status).toBe('busted')
+  })
+
+  it('emits an action-drawn event when an Action card is pulled (visible even on auto-resolve)', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const freeze: FreezeCard = {
+      id: createCardId('action-freeze-test'),
+      kind: 'action',
+      action: 'freeze',
+    }
+
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [freeze, ...baseGame.deck],
+        dealQueue: null,
+        round: { ...round, activePlayerIndex: 0 },
+      },
+    })
+
+    store.draw()
+
+    expect(store.lastEvent).toMatchObject({
+      kind: 'action-drawn',
+      playerIndex: 0,
+      card: { id: freeze.id, action: 'freeze' },
+    })
   })
 
   it('emits a second-chance-save event with both cards when SC neutralises a duplicate', () => {

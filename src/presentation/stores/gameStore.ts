@@ -7,8 +7,11 @@ import { resolveAction } from '@/application/use-cases/resolveAction'
 import { startGame } from '@/application/use-cases/startGame'
 import { stayPlayer } from '@/application/use-cases/stayPlayer'
 import {
+  isActionCard,
   isNumberCard,
   isSecondChanceCard,
+  type ActionCard,
+  type Card,
   type NumberCard,
   type SecondChanceCard,
 } from '@/domain/entities/Card'
@@ -46,7 +49,13 @@ export function setGameStoreDeps(deps: Partial<StoreDeps>): void {
  * stops showing the banner without any timer.
  */
 export type GameEvent =
-  | { kind: 'bust'; playerIndex: number; playerPseudo: string }
+  | {
+      kind: 'bust'
+      playerIndex: number
+      playerPseudo: string
+      /** The number card that triggered the bust (= the drawn duplicate). */
+      duplicateCard: NumberCard
+    }
   | { kind: 'flip7'; playerIndex: number; playerPseudo: string }
   | { kind: 'frozen'; playerIndex: number; playerPseudo: string }
   | {
@@ -57,6 +66,13 @@ export type GameEvent =
       duplicateCard: NumberCard
       /** The Second Chance card that was consumed. */
       secondChanceCard: SecondChanceCard
+    }
+  | {
+      kind: 'action-drawn'
+      /** Index of the player who pulled the card from the deck. */
+      playerIndex: number
+      playerPseudo: string
+      card: ActionCard
     }
   | { kind: 'round-ended'; roundNumber: number }
   | { kind: 'game-finished' }
@@ -110,8 +126,21 @@ export const useGameStore = defineStore('game', () => {
     return game.value
   }
 
+  /** Resolve the index of the player who just drew (priority forced > deal > active). */
+  function drawerIndex(before: GameState): number {
+    if (before.forcedDraws !== null) return before.forcedDraws.targetIndex
+    if (before.dealQueue !== null && before.dealQueue.length > 0) {
+      return before.dealQueue[0] as number
+    }
+    return before.round?.activePlayerIndex ?? 0
+  }
+
   /** Diff active player statuses to detect the most significant transition. */
-  function detectEventAfterDraw(before: GameState, after: GameState): GameEvent | null {
+  function detectEventAfterDraw(
+    before: GameState,
+    after: GameState,
+    drawnCard: Card | null,
+  ): GameEvent | null {
     if (!before.round || !after.round) return null
 
     // Priority 1: Second Chance save (player would have busted otherwise).
@@ -135,15 +164,28 @@ export const useGameStore = defineStore('game', () => {
       }
     }
 
-    // Priority 2: bust / flip7 status transitions.
+    // Priority 2: an Action card was drawn (with or without modal). Surfacing
+    // it makes the sole-active-player auto-resolve path visible to the user.
+    if (drawnCard !== null && isActionCard(drawnCard)) {
+      const idx = drawerIndex(before)
+      return {
+        kind: 'action-drawn',
+        playerIndex: idx,
+        playerPseudo: after.players[idx]?.pseudo ?? '',
+        card: drawnCard,
+      }
+    }
+
+    // Priority 3: bust / flip7 status transitions.
     for (let i = 0; i < after.round.playerStates.length; i += 1) {
       const prev = before.round.playerStates[i]?.status
       const curr = after.round.playerStates[i]?.status
-      if (prev === 'active' && curr === 'busted') {
+      if (prev === 'active' && curr === 'busted' && drawnCard !== null && isNumberCard(drawnCard)) {
         return {
           kind: 'bust',
           playerIndex: i,
           playerPseudo: after.players[i]?.pseudo ?? '',
+          duplicateCard: drawnCard,
         }
       }
       if (prev === 'active' && curr === 'flip7') {
@@ -184,7 +226,7 @@ export const useGameStore = defineStore('game', () => {
     const topCard = before.deck[0] ?? null
     game.value = drawCard({ random: activeDeps.random }, before)
     lastDrawnCardId.value = topCard?.id ?? null
-    lastEvent.value = detectEventAfterDraw(before, game.value)
+    lastEvent.value = detectEventAfterDraw(before, game.value, topCard)
     endRoundIfReady()
     persist()
   }

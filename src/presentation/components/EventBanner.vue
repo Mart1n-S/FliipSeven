@@ -16,12 +16,18 @@ interface EventStyle {
   classes: string
 }
 
+const ACTION_LABEL = {
+  freeze: 'Gel',
+  'flip-three': 'Trois à la Suite',
+  'second-chance': 'Seconde Chance',
+} as const
+
 const style = computed<EventStyle>(() => {
   const e = props.event
   switch (e.kind) {
     case 'bust':
       return {
-        message: `${e.playerPseudo} a perdu !`,
+        message: `${e.playerPseudo} a perdu sur un doublon de ${e.duplicateCard.value} !`,
         classes: 'border-rose-700 bg-rose-900/40 text-rose-100',
       }
     case 'flip7':
@@ -38,6 +44,11 @@ const style = computed<EventStyle>(() => {
       return {
         message: `Seconde Chance ! ${e.playerPseudo} a évité un doublon de ${e.duplicateCard.value}.`,
         classes: 'border-emerald-600 bg-emerald-900/40 text-emerald-100',
+      }
+    case 'action-drawn':
+      return {
+        message: `${e.playerPseudo} a pioché une carte ${ACTION_LABEL[e.card.action]}.`,
+        classes: 'border-amber-600 bg-amber-900/40 text-amber-100',
       }
     case 'round-ended':
       return {
@@ -79,6 +90,17 @@ const style = computed<EventStyle>(() => {
       <span class="text-xs opacity-70">+</span>
       <CardView :card="event.secondChanceCard" size="sm" />
       <span class="ml-1 text-xs opacity-70">→ défausse</span>
+    </div>
+
+    <!-- Show the card that caused the bust. -->
+    <div v-else-if="event.kind === 'bust'" class="mt-2 flex items-center gap-2">
+      <CardView :card="event.duplicateCard" size="sm" />
+      <span class="text-xs opacity-70">doublon déjà sur la rangée</span>
+    </div>
+
+    <!-- Show the action card that was just drawn (even if it auto-resolves). -->
+    <div v-else-if="event.kind === 'action-drawn'" class="mt-2 flex items-center gap-2">
+      <CardView :card="event.card" size="sm" />
     </div>
   </div>
 </template>
