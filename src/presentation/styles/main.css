@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens — Phase 1 of the visual redesign.
+ * Design tokens - Phase 1 of the visual redesign.
  *
  * The previous theme used Inter + the default Tailwind slate palette.
  * The new direction (inspired by the user-validated mockups) keeps
@@ -59,7 +59,7 @@ body {
 }
 
 /*
- * Focus-visible — accessibility baseline.
+ * Focus-visible - accessibility baseline.
  * Buttons and links get a clearly visible ring keyboard-only.
  * Touch / mouse interactions are unaffected.
  */

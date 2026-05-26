@@ -4,8 +4,9 @@ import type { Player } from '@/domain/entities/Player'
 import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { calculateRoundScore } from '@/domain/rules/score'
 import type { CardId } from '@/domain/value-objects/CardId'
-import type { PlayerStatus } from '@/domain/value-objects/PlayerStatus'
+import Avatar from '@/presentation/components/Avatar.vue'
 import CardView from '@/presentation/components/CardView.vue'
+import StatusBadge from '@/presentation/components/StatusBadge.vue'
 
 const props = defineProps<{
   player: Player
@@ -18,110 +19,128 @@ const props = defineProps<{
 
 const roundScore = computed(() => (props.state ? calculateRoundScore(props.state).total : 0))
 
-const statusBadge = computed<{ label: string; classes: string } | null>(() => {
-  if (props.state === null) return null
-  const map: Record<PlayerStatus, { label: string; classes: string } | null> = {
-    active: null,
-    stayed: { label: 'Reste', classes: 'bg-slate-700 text-slate-200' },
-    busted: { label: 'Perdu', classes: 'bg-rose-900/60 text-rose-200' },
-    frozen: { label: 'Gelé', classes: 'bg-sky-900/60 text-sky-200' },
-    flip7: { label: 'Flip 7', classes: 'bg-amber-500/30 text-amber-200' },
+/**
+ * Color of the large round-score number. We tint the score in the
+ * player's status color, except for active players: cyan makes the
+ * eye jump to whoever is about to play.
+ */
+const scoreColor = computed(() => {
+  if (props.isActive) return 'text-[--color-status-active]'
+  if (props.state === null) return 'text-slate-100'
+  switch (props.state.status) {
+    case 'busted':
+      return 'text-slate-600 line-through decoration-1'
+    case 'frozen':
+      return 'text-[--color-status-frozen]'
+    case 'flip7':
+      return 'text-[--color-status-flip7]'
+    case 'stayed':
+    case 'active':
+    default:
+      return 'text-slate-100'
   }
-  return map[props.state.status]
 })
 
+/**
+ * Container styling per status.
+ * - active   : cyan ring + slightly raised surface
+ * - busted   : dimmed, no ring
+ * - frozen   : sky-tinted hint, dimmed
+ * - flip7    : amber ring
+ * - default  : raised surface, faint border
+ */
 const containerClass = computed(() => {
   if (props.isActive) {
-    return 'border-indigo-400 bg-slate-800 ring-1 ring-indigo-400/40'
+    return 'bg-[--color-surface-raised] ring-2 ring-[--color-status-active] shadow-lg shadow-[--color-status-active]/10'
   }
-  if (props.state?.status === 'busted' || props.state?.status === 'frozen') {
-    return 'border-slate-800 bg-slate-900/60 opacity-60'
+  if (props.state?.status === 'busted') {
+    return 'bg-[--color-surface-base] ring-1 ring-[--color-surface-border]/60 opacity-70'
+  }
+  if (props.state?.status === 'frozen') {
+    return 'bg-[--color-surface-base] ring-1 ring-[--color-status-frozen]/30 opacity-80'
   }
   if (props.state?.status === 'flip7') {
-    return 'border-amber-500/50 bg-slate-800'
+    return 'bg-[--color-surface-raised] ring-2 ring-[--color-status-flip7]'
   }
-  return 'border-slate-800 bg-slate-900'
+  return 'bg-[--color-surface-raised] ring-1 ring-[--color-surface-border]'
 })
+
+const nameClass = computed(() => {
+  if (props.state?.status === 'busted') return 'text-slate-500 line-through decoration-1'
+  return 'text-slate-100'
+})
+
+const isEmpty = computed(
+  () =>
+    props.state !== null &&
+    props.state.numberCards.length === 0 &&
+    props.state.modifiers.length === 0 &&
+    props.state.secondChance === null,
+)
 </script>
 
 <template>
   <article
-    class="rounded-xl border p-3 transition"
+    class="rounded-2xl p-3.5 transition-all duration-200"
     :class="containerClass"
     :aria-current="isActive ? 'true' : undefined"
   >
-    <header class="mb-2 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 truncate">
-        <span class="truncate font-semibold text-slate-100">{{ player.pseudo }}</span>
-        <span
-          v-if="isDealer"
-          class="rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-slate-300 uppercase"
-          title="Donneur de cette manche"
-        >
-          Donneur
-        </span>
-        <span
-          v-if="statusBadge"
-          class="rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase"
-          :class="statusBadge.classes"
-        >
-          {{ statusBadge.label }}
-        </span>
+    <div class="flex items-center gap-3">
+      <Avatar
+        :pseudo="player.pseudo"
+        :status="state?.status ?? null"
+        :active="isActive"
+        size="md"
+      />
+
+      <div class="min-w-0 flex-1">
+        <header class="mb-1.5 flex flex-wrap items-center gap-2">
+          <span class="truncate font-semibold" :class="nameClass">{{ player.pseudo }}</span>
+          <StatusBadge v-if="state" :status="state.status" />
+          <span
+            v-if="isDealer"
+            class="inline-flex items-center rounded-md bg-[--color-surface-overlay] px-2 py-0.5 text-[10px] font-semibold tracking-wider text-slate-400 uppercase ring-1 ring-[--color-surface-border]"
+            title="Donneur de cette manche"
+          >
+            Donneur
+          </span>
+        </header>
+
+        <!-- Cards row: numbers + modifiers + second chance inline -->
+        <div v-if="state && !isEmpty" class="flex flex-wrap items-center gap-1">
+          <CardView
+            v-for="card in state.numberCards"
+            :key="card.id"
+            :card="card"
+            size="sm"
+            :highlight="card.id === highlightedCardId"
+          />
+          <CardView
+            v-for="card in state.modifiers"
+            :key="card.id"
+            :card="card"
+            size="sm"
+            :highlight="card.id === highlightedCardId"
+          />
+          <CardView
+            v-if="state.secondChance"
+            :card="state.secondChance"
+            size="sm"
+            :highlight="state.secondChance.id === highlightedCardId"
+          />
+        </div>
+
+        <p v-else-if="state" class="text-xs text-slate-500 italic">Aucune carte</p>
       </div>
 
-      <div class="text-right">
-        <p class="font-mono text-base text-indigo-200 tabular-nums">
-          {{ player.totalScore }}
-          <span class="text-xs text-slate-500">pts</span>
+      <div class="shrink-0 text-right">
+        <p class="font-mono text-3xl leading-none font-bold tabular-nums" :class="scoreColor">
+          {{ roundScore }}
         </p>
-        <p
-          v-if="state && roundScore > 0"
-          class="font-mono text-xs text-slate-400 tabular-nums"
-          title="Score provisoire de la manche"
-        >
-          +{{ roundScore }}
+        <p class="mt-1.5 font-mono text-[11px] tracking-wide text-slate-500 tabular-nums">
+          {{ player.totalScore }} pts
         </p>
       </div>
-    </header>
-
-    <div v-if="state" class="flex flex-col gap-2">
-      <!-- Number cards -->
-      <div v-if="state.numberCards.length > 0" class="flex flex-wrap gap-1">
-        <CardView
-          v-for="card in state.numberCards"
-          :key="card.id"
-          :card="card"
-          size="sm"
-          :highlight="card.id === highlightedCardId"
-        />
-      </div>
-
-      <!-- Modifiers + Second Chance -->
-      <div
-        v-if="state.modifiers.length > 0 || state.secondChance"
-        class="flex flex-wrap items-center gap-1"
-      >
-        <CardView
-          v-for="card in state.modifiers"
-          :key="card.id"
-          :card="card"
-          size="sm"
-          :highlight="card.id === highlightedCardId"
-        />
-        <CardView
-          v-if="state.secondChance"
-          :card="state.secondChance"
-          size="sm"
-          :highlight="state.secondChance.id === highlightedCardId"
-        />
-      </div>
-
-      <p
-        v-if="state.numberCards.length === 0 && state.modifiers.length === 0 && !state.secondChance"
-        class="text-xs text-slate-500 italic"
-      >
-        Aucune carte
-      </p>
     </div>
   </article>
 </template>
