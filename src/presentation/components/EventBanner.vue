@@ -11,102 +11,151 @@ defineEmits<{
   dismiss: []
 }>()
 
-interface EventStyle {
-  message: string
-  classes: string
-}
-
 const ACTION_LABEL = {
   freeze: 'Gel',
   'flip-three': 'Trois à la Suite',
   'second-chance': 'Seconde Chance',
 } as const
 
-const style = computed<EventStyle>(() => {
+/**
+ * Per-kind banner data: the small uppercase tag, the big headline,
+ * the muted sub-explanation, and the accent color that drives the
+ * left bar + the tag tint. Headlines stay short (action-oriented),
+ * details go into `sub` so the eye reads top to bottom.
+ */
+interface BannerStyle {
+  readonly tag: string
+  readonly headline: string
+  readonly sub: string
+  readonly accent: string
+  readonly tagClasses: string
+}
+
+const style = computed<BannerStyle>(() => {
   const e = props.event
   switch (e.kind) {
     case 'bust':
       return {
-        message: `${e.playerPseudo} a perdu sur un doublon de ${e.duplicateCard.value} !`,
-        classes: 'border-rose-700 bg-rose-900/40 text-rose-100',
+        tag: 'Éliminé',
+        headline: `${e.playerPseudo} est éliminé`,
+        sub: `Doublon de ${e.duplicateCard.value} - toutes ses cartes sont défaussées`,
+        accent: 'bg-status-busted',
+        tagClasses: 'text-status-busted-text',
       }
     case 'flip7':
       return {
-        message: `${e.playerPseudo} fait Flip 7 ! +15 pts bonus.`,
-        classes: 'border-amber-500 bg-amber-900/40 text-amber-100',
+        tag: 'Flip 7',
+        headline: `${e.playerPseudo} réussit le Flip 7`,
+        sub: `7 cartes uniques, +15 points bonus`,
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     case 'frozen':
       return {
-        message: `${e.playerPseudo} a été gelé.`,
-        classes: 'border-sky-700 bg-sky-900/40 text-sky-100',
+        tag: 'Gel',
+        headline: `${e.playerPseudo} gelé`,
+        sub: 'Ses points du tour sont perdus',
+        accent: 'bg-status-frozen',
+        tagClasses: 'text-status-frozen-text',
       }
     case 'second-chance-save':
       return {
-        message: `Seconde Chance ! ${e.playerPseudo} a évité un doublon de ${e.duplicateCard.value}.`,
-        classes: 'border-emerald-600 bg-emerald-900/40 text-emerald-100',
+        tag: 'Seconde Chance',
+        headline: `${e.playerPseudo} évite le pire`,
+        sub: `Doublon de ${e.duplicateCard.value} neutralisé`,
+        accent: 'bg-accent-success',
+        tagClasses: 'text-accent-success-text',
       }
     case 'action-drawn':
       return {
-        message: `${e.playerPseudo} a pioché une carte ${ACTION_LABEL[e.card.action]}.`,
-        classes: 'border-amber-600 bg-amber-900/40 text-amber-100',
+        tag: 'Carte action',
+        headline: `${e.playerPseudo} pioche un ${ACTION_LABEL[e.card.action]}`,
+        sub: 'En attente de résolution',
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     case 'round-ended':
       return {
-        message: `Manche ${e.roundNumber} terminée.`,
-        classes: 'border-indigo-700 bg-indigo-900/40 text-indigo-100',
+        tag: `Manche ${e.roundNumber}`,
+        headline: 'Manche terminée',
+        sub: 'Place au décompte des points',
+        accent: 'bg-accent-info',
+        tagClasses: 'text-accent-info-text',
       }
     case 'game-finished':
       return {
-        message: 'Partie terminée !',
-        classes: 'border-amber-500 bg-amber-900/40 text-amber-100',
+        tag: 'Partie',
+        headline: 'Partie terminée',
+        sub: 'Le classement final est prêt',
+        accent: 'bg-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     default: {
-      // Exhaustive check: TS will error here if a new GameEvent kind
-      // is introduced without a matching case above.
       const _exhaustive: never = e
-      return { message: String(_exhaustive), classes: '' }
+      return {
+        tag: '',
+        headline: String(_exhaustive),
+        sub: '',
+        accent: 'bg-surface-border',
+        tagClasses: 'text-text-secondary',
+      }
     }
   }
 })
 </script>
 
 <template>
-  <div class="border-b px-4 py-2 text-sm" :class="style.classes" role="status" aria-live="polite">
-    <div class="flex items-center justify-between gap-3">
-      <span class="font-medium">{{ style.message }}</span>
+  <output
+    class="relative mx-4 mt-3 block overflow-hidden rounded-2xl bg-surface-raised pr-3 pl-4 ring-1 ring-surface-border"
+  >
+    <!-- Vertical accent bar on the left. -->
+    <span class="absolute top-0 bottom-0 left-0 w-1" :class="style.accent" aria-hidden="true" />
+
+    <div class="flex items-start justify-between gap-3 py-3">
+      <div class="min-w-0 flex-1">
+        <p
+          class="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase"
+          :class="style.tagClasses"
+        >
+          <span aria-hidden="true">-</span>
+          {{ style.tag }}
+        </p>
+        <h3 class="mt-1 truncate text-lg font-semibold text-text-primary">
+          {{ style.headline }}
+        </h3>
+        <p class="mt-0.5 truncate text-sm text-text-secondary">
+          {{ style.sub }}
+        </p>
+
+        <!-- Card thumbnails when the event has cards to show. -->
+        <div v-if="event.kind === 'second-chance-save'" class="mt-2.5 flex items-center gap-1.5">
+          <CardView :card="event.duplicateCard" size="sm" />
+          <span class="text-xs text-text-tertiary">+</span>
+          <CardView :card="event.secondChanceCard" size="sm" />
+        </div>
+        <div v-else-if="event.kind === 'action-drawn'" class="mt-2.5 flex items-center gap-1.5">
+          <CardView :card="event.card" size="sm" />
+        </div>
+      </div>
+
       <button
         type="button"
-        class="rounded p-1 text-current opacity-70 transition hover:opacity-100"
-        aria-label="Fermer"
+        class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-text-tertiary transition hover:bg-surface-overlay hover:text-text-primary"
+        aria-label="Fermer la bannière"
         @click="$emit('dismiss')"
       >
-        &times;
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="size-4"
+          aria-hidden="true"
+        >
+          <path
+            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+          />
+        </svg>
       </button>
     </div>
-
-    <!-- Show the saved duplicate alongside the consumed SC card. -->
-    <div v-if="event.kind === 'second-chance-save'" class="mt-2 flex items-center gap-2">
-      <CardView :card="event.duplicateCard" size="sm" />
-      <span class="text-xs opacity-70">+</span>
-      <CardView :card="event.secondChanceCard" size="sm" />
-      <span class="ml-1 text-xs opacity-70">→ défausse</span>
-    </div>
-
-    <!-- Show the card that caused the bust. -->
-    <div v-else-if="event.kind === 'bust'" class="mt-2 flex items-center gap-2">
-      <CardView :card="event.duplicateCard" size="sm" />
-      <span class="text-xs opacity-70">doublon déjà sur la rangée</span>
-    </div>
-
-    <!-- Show the 7th card that completed the Flip 7. -->
-    <div v-else-if="event.kind === 'flip7'" class="mt-2 flex items-center gap-2">
-      <CardView :card="event.finalCard" size="sm" />
-      <span class="text-xs opacity-70">7e carte → +15 pts</span>
-    </div>
-
-    <!-- Show the action card that was just drawn (even if it auto-resolves). -->
-    <div v-else-if="event.kind === 'action-drawn'" class="mt-2 flex items-center gap-2">
-      <CardView :card="event.card" size="sm" />
-    </div>
-  </div>
+  </output>
 </template>

@@ -9,6 +9,32 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="Flip 7 - le jeu de cartes en version web responsive" />
     <title>Flip 7</title>
+    <script>
+      // Apply the theme BEFORE the first paint to avoid a flash of the
+      // wrong theme. The component layer reads the same logic via
+      // `useTheme()`; both must stay in sync (same storage key, same
+      // resolution rules: explicit user pref > OS preference).
+      ;(function () {
+        var saved = null
+        try {
+          saved = globalThis.localStorage.getItem('flip7:theme')
+        } catch (storageErr) {
+          // Private mode or security restrictions: log at debug level
+          // and fall back to OS preference. We don't want to break the
+          // app render over a non-essential preference read.
+          if (globalThis.console) {
+            globalThis.console.debug('flip7: theme storage unavailable', storageErr.message)
+          }
+        }
+        var pref =
+          saved ||
+          (globalThis.matchMedia &&
+          globalThis.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light')
+        document.documentElement.dataset.theme = pref
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

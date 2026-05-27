@@ -107,18 +107,18 @@ function quit() {
          so a Flip Three triggered while dealing is visible to the user). -->
     <div
       v-if="!pendingAction && isForcedDraw && forcedDrawTarget && game.forcedDraws"
-      class="border-b border-indigo-700 bg-indigo-900/40 px-4 py-2 text-sm text-indigo-200"
+      class="border-b border-accent-info/30 bg-accent-info/10 px-4 py-2 text-sm text-accent-info-text"
     >
       <span class="font-semibold">{{ forcedDrawTarget.pseudo }}</span> doit piocher encore
       {{ game.forcedDraws.remaining }}
       {{ game.forcedDraws.remaining > 1 ? 'cartes' : 'carte' }}
-      <span class="text-indigo-300/70">(Trois à la Suite)</span>.
+      <span class="opacity-70">(Trois à la Suite)</span>.
     </div>
 
     <!-- Initial deal phase indicator -->
     <div
       v-else-if="isDealPhase && currentDealee && !pendingAction"
-      class="border-b border-emerald-700 bg-emerald-900/40 px-4 py-2 text-sm text-emerald-100"
+      class="border-b border-accent-success/30 bg-accent-success/10 px-4 py-2 text-sm text-accent-success-text"
     >
       Distribution en cours - carte pour
       <span class="font-semibold">{{ currentDealee.pseudo }}</span>
@@ -182,10 +182,10 @@ function quit() {
   </main>
 
   <main v-else class="flex min-h-full flex-col items-center justify-center gap-4 p-6">
-    <p class="text-slate-400">Aucune partie en cours.</p>
+    <p class="text-text-secondary">Aucune partie en cours.</p>
     <button
       type="button"
-      class="rounded-xl bg-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
+      class="rounded-xl bg-status-active px-6 py-3 text-base font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-95"
       @click="router.replace({ name: 'home' })"
     >
       Retour à l'accueil

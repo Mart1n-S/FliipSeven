@@ -25,6 +25,8 @@
     "vue-router": "^5.0.7"
   },
   "devDependencies": {
+    "@fontsource/geist": "^5.2.9",
+    "@fontsource/geist-mono": "^5.2.8",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^24.12.3",
     "@vite-pwa/assets-generator": "^1.0.2",

@@ -29,7 +29,7 @@ function describe(entry: HistoryEntry): string {
         ? `${entry.playerPseudo} pioche (Trois à la Suite)`
         : `${entry.playerPseudo} pioche`
     case 'bust':
-      return `${entry.playerPseudo} bust sur un doublon de ${entry.duplicateValue}`
+      return `${entry.playerPseudo} éliminé sur un doublon de ${entry.duplicateValue}`
     case 'flip7':
       return `${entry.playerPseudo} fait Flip 7 ! (+${entry.roundScore} pts)`
     case 'frozen':
@@ -65,54 +65,75 @@ function describe(entry: HistoryEntry): string {
   }
 }
 
+/**
+ * Color accent per entry kind. Mirrors the status palette used in
+ * StatusBadge / EventBanner so the journal feels visually consistent
+ * with the rest of the game.
+ */
 const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
-  'round-start': 'text-emerald-300',
-  deal: 'text-slate-400',
-  draw: 'text-slate-300',
-  bust: 'text-rose-400',
-  flip7: 'text-amber-300',
-  frozen: 'text-sky-400',
-  'sc-save': 'text-emerald-300',
-  stay: 'text-sky-300',
-  'action-resolved': 'text-amber-300',
-  'round-end': 'text-indigo-300',
-  'game-finished': 'text-amber-300',
+  'round-start': 'text-accent-success-text',
+  deal: 'text-text-tertiary',
+  draw: 'text-text-secondary',
+  bust: 'text-status-busted-text',
+  flip7: 'text-status-flip7-text',
+  frozen: 'text-status-frozen-text',
+  'sc-save': 'text-accent-success-text',
+  stay: 'text-status-active-text',
+  'action-resolved': 'text-status-flip7-text',
+  'round-end': 'text-accent-info-text',
+  'game-finished': 'text-status-flip7-text',
 }
 </script>
 
 <template>
   <div
-    class="fixed inset-0 z-30 flex items-stretch justify-end bg-slate-950/60 backdrop-blur-sm"
+    class="fixed inset-0 z-30 flex items-stretch justify-end bg-slate-950/70 backdrop-blur-sm"
     role="dialog"
     aria-modal="true"
     aria-label="Historique de la partie"
     @click.self="$emit('close')"
   >
     <aside
-      class="flex h-full w-full max-w-md flex-col border-l border-slate-800 bg-slate-900 shadow-xl"
+      class="flex h-full w-full max-w-md flex-col border-l border-surface-border bg-surface-base shadow-2xl"
     >
-      <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+      <header class="flex items-center justify-between border-b border-surface-border px-4 py-3">
         <div>
-          <h2 class="text-base font-semibold text-slate-100">Historique</h2>
-          <p class="text-xs text-slate-400">{{ entries.length }} évènement(s)</p>
+          <p class="text-[10px] font-semibold tracking-wider text-text-tertiary uppercase">
+            Journal
+          </p>
+          <h2 class="text-base font-semibold text-text-primary">Historique</h2>
+          <p class="mt-0.5 font-mono text-xs text-text-tertiary tabular-nums">
+            {{ entries.length }} évènement{{ entries.length > 1 ? 's' : '' }}
+          </p>
         </div>
         <button
           type="button"
-          class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+          class="rounded-lg p-2 text-text-secondary transition hover:bg-surface-raised hover:text-text-primary"
+          aria-label="Fermer le journal"
           @click="$emit('close')"
         >
-          Fermer
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="size-5"
+            aria-hidden="true"
+          >
+            <path
+              d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+            />
+          </svg>
         </button>
       </header>
 
       <div
         v-if="entries.length === 0"
-        class="flex flex-1 items-center justify-center px-4 text-sm text-slate-500"
+        class="flex flex-1 items-center justify-center px-4 text-sm text-text-tertiary"
       >
         Aucun évènement pour l'instant.
       </div>
 
-      <ol v-else class="flex-1 divide-y divide-slate-800 overflow-y-auto">
+      <ol v-else class="flex-1 divide-y divide-surface-border overflow-y-auto">
         <li
           v-for="(entry, i) in reversedEntries"
           :key="`${entry.timestamp}-${i}`"
@@ -122,7 +143,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
             <p class="text-sm font-medium" :class="KIND_COLOR[entry.kind]">
               {{ describe(entry) }}
             </p>
-            <time class="font-mono text-xs whitespace-nowrap text-slate-500">
+            <time class="font-mono text-xs whitespace-nowrap text-text-tertiary">
               {{ formatTime(entry.timestamp) }}
             </time>
           </div>
@@ -146,9 +167,9 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
               entry.kind === 'flip7' ||
               entry.kind === 'frozen'
             "
-            class="mt-2 rounded-md border border-slate-800 bg-slate-950/40 p-2"
+            class="mt-2 rounded-lg bg-surface-raised p-2 ring-1 ring-surface-border"
           >
-            <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+            <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-text-tertiary uppercase">
               Jeu de {{ entry.playerPseudo }}
             </p>
             <div
@@ -157,7 +178,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
                 entry.hand.modifiers.length === 0 &&
                 entry.hand.secondChance === null
               "
-              class="text-xs text-slate-500 italic"
+              class="text-xs text-text-tertiary italic"
             >
               Aucune carte
             </div>
@@ -180,7 +201,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
 
           <div
             v-else-if="entry.kind === 'round-end'"
-            class="mt-1.5 grid grid-cols-1 gap-0.5 font-mono text-xs text-slate-400"
+            class="mt-1.5 grid grid-cols-1 gap-0.5 font-mono text-xs text-text-secondary"
           >
             <span v-for="s in entry.scores" :key="s.pseudo" class="flex justify-between gap-3">
               <span>{{ s.pseudo }}</span>

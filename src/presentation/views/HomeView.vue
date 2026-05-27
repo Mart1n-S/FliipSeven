@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import ThemeToggle from '@/presentation/components/ThemeToggle.vue'
 import { useGame } from '@/presentation/composables/useGame'
 
 const router = useRouter()
@@ -35,17 +36,26 @@ function goToSetup() {
 </script>
 
 <template>
-  <main class="flex min-h-full flex-col items-center justify-center gap-10 p-6">
+  <main class="relative flex min-h-full flex-col items-center justify-center gap-10 p-6">
+    <div class="absolute top-4 right-4">
+      <ThemeToggle />
+    </div>
+
     <header class="text-center">
-      <h1 class="text-6xl font-bold tracking-tight">Flip 7</h1>
-      <p class="mt-3 text-slate-400">Le jeu de cartes - version web</p>
+      <p class="text-[11px] font-semibold tracking-widest text-status-active-text uppercase">
+        Jeu de cartes
+      </p>
+      <h1 class="mt-2 text-7xl font-bold tracking-tight text-text-primary">Flip 7</h1>
+      <p class="mt-3 text-sm text-text-secondary">
+        Version web · jusqu'à 18 joueurs sur un téléphone
+      </p>
     </header>
 
     <div class="flex w-full max-w-xs flex-col gap-3">
       <button
         v-if="canResume"
         type="button"
-        class="rounded-xl bg-indigo-500 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
+        class="rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
         @click="resume"
       >
         Reprendre la partie
@@ -53,11 +63,11 @@ function goToSetup() {
 
       <button
         type="button"
-        class="rounded-xl px-6 py-4 text-lg font-semibold transition active:scale-95"
+        class="rounded-xl px-6 py-4 text-lg font-semibold transition active:scale-[0.98]"
         :class="
           canResume
-            ? 'border border-slate-700 text-slate-200 hover:border-slate-500'
-            : 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-400'
+            ? 'bg-surface-raised text-text-primary ring-1 ring-surface-border hover:ring-slate-500'
+            : 'bg-status-active text-text-inverse shadow-lg shadow-status-active/20 hover:brightness-110'
         "
         @click="startNew"
       >
@@ -65,7 +75,7 @@ function goToSetup() {
       </button>
     </div>
 
-    <p v-if="canResume" class="text-xs text-slate-500">
+    <p v-if="canResume" class="max-w-xs text-center text-xs text-text-tertiary">
       Démarrer une nouvelle partie effacera la partie en cours.
     </p>
 
