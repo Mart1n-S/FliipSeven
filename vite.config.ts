@@ -16,6 +16,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
+      workbox: {
+        // Precache all JS/CSS/HTML + images (card PNGs, SVGs, icons) + fonts + the rules PDF.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2,pdf}'],
+        // Raise the per-file limit (default 2 MB) so large PNGs / the PDF aren't silently skipped.
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+      },
       manifest: {
         name: 'Flip 7',
         short_name: 'Flip 7',
