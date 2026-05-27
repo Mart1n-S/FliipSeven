@@ -64,20 +64,40 @@ function back() {
     <header class="mb-6 flex items-center gap-3">
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 text-slate-300 hover:border-slate-500"
-        aria-label="Retour"
+        class="flex size-10 items-center justify-center rounded-lg bg-surface-raised text-slate-300 ring-1 ring-surface-border transition hover:ring-slate-500"
+        aria-label="Retour à l'accueil"
         @click="back"
       >
-        &larr;
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="size-5"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z"
+            clip-rule="evenodd"
+          />
+        </svg>
       </button>
-      <h1 class="text-2xl font-bold">Nouvelle partie</h1>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-semibold tracking-widest text-status-active uppercase">
+          Nouvelle partie
+        </p>
+        <h1 class="text-2xl font-bold text-slate-100">Qui joue ?</h1>
+      </div>
     </header>
 
     <form class="flex flex-1 flex-col gap-4" @submit.prevent="start">
-      <p class="text-sm text-slate-400">
-        {{ pseudos.length }} / {{ MAX_PLAYERS }} joueurs
-        <span class="text-slate-600">- minimum {{ MIN_PLAYERS }}</span>
-      </p>
+      <div class="flex items-center justify-between">
+        <p class="font-mono text-xs text-slate-500 tabular-nums">
+          <span class="text-slate-300">{{ pseudos.length }}</span>
+          <span class="text-slate-600">/ {{ MAX_PLAYERS }} joueurs</span>
+        </p>
+        <p class="text-[10px] tracking-wider text-slate-600 uppercase">Min. {{ MIN_PLAYERS }}</p>
+      </div>
 
       <ul class="flex flex-col gap-2">
         <li v-for="(_, index) in pseudos" :key="index">
@@ -93,21 +113,25 @@ function back() {
 
       <button
         type="button"
-        class="rounded-lg border border-dashed border-slate-700 px-4 py-3 text-sm font-medium text-slate-300 transition hover:border-indigo-400 hover:text-indigo-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-700 disabled:hover:text-slate-300"
+        class="rounded-xl border border-dashed border-surface-border bg-transparent px-4 py-3 text-sm font-medium text-slate-400 transition hover:border-status-active hover:text-status-active disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-surface-border disabled:hover:text-slate-400"
         :disabled="pseudos.length >= MAX_PLAYERS"
         @click="addPlayer"
       >
         + Ajouter un joueur
       </button>
 
-      <p v-if="errorMessage" class="text-sm text-rose-400" role="alert">
+      <p
+        v-if="errorMessage"
+        class="rounded-lg bg-status-busted/10 px-3 py-2 text-sm text-status-busted ring-1 ring-status-busted/30"
+        role="alert"
+      >
         {{ errorMessage }}
       </p>
 
       <div class="mt-auto pt-4">
         <button
           type="submit"
-          class="w-full rounded-xl bg-indigo-500 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:bg-indigo-500"
+          class="w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
           :disabled="!isValid"
         >
           Démarrer la partie

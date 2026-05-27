@@ -1,5 +1,8 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+import Avatar from '@/presentation/components/Avatar.vue'
+
+const props = defineProps<{
   modelValue: string
   index: number
   canRemove: boolean
@@ -15,16 +18,21 @@ function onInput(event: Event) {
   const target = event.target as HTMLInputElement
   emit('update:modelValue', target.value)
 }
+
+/**
+ * Show the live initials as soon as the user types, or fall back to
+ * the seat number while the field is empty. Mirrors the in-game
+ * avatar so the player can preview how their seat will look.
+ */
+const avatarSeed = computed(() => {
+  const trimmed = props.modelValue.trim()
+  return trimmed.length > 0 ? trimmed : `${props.index + 1}`
+})
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <span
-      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-sm font-semibold text-slate-400"
-      :aria-label="`Joueur ${index + 1}`"
-    >
-      {{ index + 1 }}
-    </span>
+    <Avatar :pseudo="avatarSeed" size="md" />
 
     <input
       type="text"
@@ -35,18 +43,28 @@ function onInput(event: Event) {
       autocomplete="off"
       autocapitalize="words"
       spellcheck="false"
-      class="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-base text-slate-100 placeholder-slate-500 transition focus:border-indigo-400 focus:outline-none"
+      class="flex-1 rounded-lg bg-surface-raised px-3 py-2.5 text-base text-slate-100 ring-1 ring-surface-border placeholder:text-slate-500 focus:ring-2 focus:ring-status-active focus:outline-none"
       @input="onInput"
     />
 
     <button
       v-if="canRemove"
       type="button"
-      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700 text-slate-400 transition hover:border-rose-500 hover:text-rose-400"
+      class="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-500 ring-1 ring-surface-border transition hover:bg-surface-raised hover:text-status-busted hover:ring-status-busted/40"
       :aria-label="`Retirer le joueur ${index + 1}`"
       @click="emit('remove')"
     >
-      &times;
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="size-4"
+        aria-hidden="true"
+      >
+        <path
+          d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+        />
+      </svg>
     </button>
   </div>
 </template>
