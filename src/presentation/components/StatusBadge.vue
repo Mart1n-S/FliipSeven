@@ -19,23 +19,23 @@ interface BadgeStyle {
 const styleByStatus: Record<PlayerStatus, BadgeStyle | null> = {
   active: {
     label: 'À jouer',
-    classes: 'bg-status-active/15 text-status-active ring-1 ring-status-active/30',
+    classes: 'bg-status-active/15 text-status-active-text ring-1 ring-status-active/30',
   },
   stayed: {
     label: 'Stop',
-    classes: 'bg-surface-overlay text-slate-300 ring-1 ring-surface-border',
+    classes: 'bg-surface-overlay text-text-secondary ring-1 ring-surface-border',
   },
   busted: {
     label: 'Bust',
-    classes: 'bg-status-busted/15 text-status-busted ring-1 ring-status-busted/30',
+    classes: 'bg-status-busted/15 text-status-busted-text ring-1 ring-status-busted/30',
   },
   frozen: {
     label: 'Gel',
-    classes: 'bg-status-frozen/15 text-status-frozen ring-1 ring-status-frozen/30',
+    classes: 'bg-status-frozen/15 text-status-frozen-text ring-1 ring-status-frozen/30',
   },
   flip7: {
     label: 'Flip 7',
-    classes: 'bg-status-flip7/15 text-status-flip7 ring-1 ring-status-flip7/30',
+    classes: 'bg-status-flip7/15 text-status-flip7-text ring-1 ring-status-flip7/30',
   },
 }
 

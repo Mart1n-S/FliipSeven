@@ -25,19 +25,19 @@ const roundScore = computed(() => (props.state ? calculateRoundScore(props.state
  * eye jump to whoever is about to play.
  */
 const scoreColor = computed(() => {
-  if (props.isActive) return 'text-status-active'
-  if (props.state === null) return 'text-slate-100'
+  if (props.isActive) return 'text-status-active-text'
+  if (props.state === null) return 'text-text-primary'
   switch (props.state.status) {
     case 'busted':
-      return 'text-slate-600 line-through decoration-1'
+      return 'text-text-tertiary line-through decoration-1'
     case 'frozen':
-      return 'text-status-frozen'
+      return 'text-status-frozen-text'
     case 'flip7':
-      return 'text-status-flip7'
+      return 'text-status-flip7-text'
     case 'stayed':
     case 'active':
     default:
-      return 'text-slate-100'
+      return 'text-text-primary'
   }
 })
 
@@ -66,8 +66,8 @@ const containerClass = computed(() => {
 })
 
 const nameClass = computed(() => {
-  if (props.state?.status === 'busted') return 'text-slate-500 line-through decoration-1'
-  return 'text-slate-100'
+  if (props.state?.status === 'busted') return 'text-text-tertiary line-through decoration-1'
+  return 'text-text-primary'
 })
 
 const isEmpty = computed(
@@ -99,7 +99,7 @@ const isEmpty = computed(
           <StatusBadge v-if="state" :status="state.status" />
           <span
             v-if="isDealer"
-            class="inline-flex items-center rounded-md bg-surface-overlay px-2 py-0.5 text-[10px] font-semibold tracking-wider text-slate-400 uppercase ring-1 ring-surface-border"
+            class="inline-flex items-center rounded-md bg-surface-overlay px-2 py-0.5 text-[10px] font-semibold tracking-wider text-text-secondary uppercase ring-1 ring-surface-border"
             title="Donneur de cette manche"
           >
             Donneur
@@ -130,14 +130,14 @@ const isEmpty = computed(
           />
         </div>
 
-        <p v-else-if="state" class="text-xs text-slate-500 italic">Aucune carte</p>
+        <p v-else-if="state" class="text-xs text-text-tertiary italic">Aucune carte</p>
       </div>
 
       <div class="shrink-0 text-right">
         <p class="font-mono text-3xl leading-none font-bold tabular-nums" :class="scoreColor">
           {{ roundScore }}
         </p>
-        <p class="mt-1.5 font-mono text-[11px] tracking-wide text-slate-500 tabular-nums">
+        <p class="mt-1.5 font-mono text-[11px] tracking-wide text-text-tertiary tabular-nums">
           {{ player.totalScore }} pts
         </p>
       </div>

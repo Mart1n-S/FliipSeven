@@ -1,35 +1,85 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens - Phase 1 of the visual redesign.
+ * Design tokens
  *
- * The previous theme used Inter + the default Tailwind slate palette.
- * The new direction (inspired by the user-validated mockups) keeps
- * Tailwind's slate scale as a base but introduces:
- *  - Geist + Geist Mono as the type pair (sans for text, mono for
- *    numerals and timestamps)
- *  - A few semantic surface / accent tokens so components don't have
- *    to repeat the same slate-900/40 / slate-800 / etc. everywhere.
+ * @theme defines the LIGHT theme values - these become the Tailwind
+ * utility defaults and the no-JS / SSR fallback. The dark theme is
+ * applied via the `[data-theme="dark"]` attribute on <html>, which
+ * is set BEFORE first paint by an inline script in index.html so the
+ * user never sees a flash of the wrong theme.
  *
- * Status colors map 1:1 to player statuses so they can be used as
- * tailwind utilities directly (eg. `text-[--color-status-active]`).
+ * Status colors keep a single value across both themes - they have
+ * enough chroma to stay legible on either background. Text usage of
+ * those colors (badge labels) is opt-in via the `*-text` variants
+ * that ARE theme-aware.
  */
 @theme {
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Surfaces */
-  --color-surface-base: oklch(15.5% 0.012 250);
-  --color-surface-raised: oklch(19% 0.012 250);
-  --color-surface-overlay: oklch(22% 0.012 250);
-  --color-surface-border: oklch(28% 0.012 250);
+  /* Surfaces (light theme defaults) */
+  --color-surface-base: oklch(98% 0.005 250);
+  --color-surface-raised: oklch(100% 0 0);
+  --color-surface-overlay: oklch(95% 0.008 250);
+  --color-surface-border: oklch(89% 0.01 250);
 
-  /* Status colors (active / stayed / busted / frozen / flip7) */
+  /* Text (light theme defaults) */
+  --color-text-primary: oklch(20% 0.012 250);
+  --color-text-secondary: oklch(45% 0.012 250);
+  --color-text-tertiary: oklch(62% 0.012 250);
+  --color-text-quaternary: oklch(80% 0.012 250);
+  /* Used on saturated buttons (cyan / rose / amber) - stays dark in
+   * both themes since these accents are always light enough that a
+   * near-black text gives the best contrast. */
+  --color-text-inverse: oklch(15% 0.012 250);
+
+  /* Status colors (single value, both themes) */
   --color-status-active: oklch(78% 0.13 210);
   --color-status-stayed: oklch(70% 0.02 250);
   --color-status-busted: oklch(70% 0.18 20);
   --color-status-frozen: oklch(78% 0.11 200);
   --color-status-flip7: oklch(82% 0.13 80);
+
+  /* Darker variants used when those colors appear as TEXT on a
+   * light-themed tinted background (the saturated values would not
+   * pass contrast on white). They are remapped back to the bright
+   * values in the dark theme below. */
+  --color-status-active-text: oklch(48% 0.16 210);
+  --color-status-busted-text: oklch(50% 0.21 20);
+  --color-status-frozen-text: oklch(48% 0.13 200);
+  --color-status-flip7-text: oklch(50% 0.16 80);
+
+  /* Two non-player accents used by the journal and event banner:
+   * success = sc-save / round-start, info = round-ended. Same dual
+   * (text vs background) treatment as the status palette. */
+  --color-accent-success: oklch(72% 0.16 150);
+  --color-accent-info: oklch(65% 0.15 280);
+  --color-accent-success-text: oklch(42% 0.16 150);
+  --color-accent-info-text: oklch(48% 0.18 280);
+}
+
+/* ---------- DARK THEME ---------- */
+[data-theme='dark'] {
+  --color-surface-base: oklch(15.5% 0.012 250);
+  --color-surface-raised: oklch(19% 0.012 250);
+  --color-surface-overlay: oklch(22% 0.012 250);
+  --color-surface-border: oklch(28% 0.012 250);
+
+  --color-text-primary: oklch(96% 0.005 250);
+  --color-text-secondary: oklch(74% 0.012 250);
+  --color-text-tertiary: oklch(58% 0.012 250);
+  --color-text-quaternary: oklch(38% 0.012 250);
+  --color-text-inverse: oklch(15% 0.012 250);
+
+  /* On dark backgrounds the bright status colors ARE readable as
+   * text, so the *-text variants point back to the saturated values. */
+  --color-status-active-text: var(--color-status-active);
+  --color-status-busted-text: var(--color-status-busted);
+  --color-status-frozen-text: var(--color-status-frozen);
+  --color-status-flip7-text: var(--color-status-flip7);
+  --color-accent-success-text: var(--color-accent-success);
+  --color-accent-info-text: var(--color-accent-info);
 }
 
 html,
@@ -41,28 +91,22 @@ body,
 body {
   margin: 0;
   background-color: var(--color-surface-base);
-  color: var(--color-slate-100);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Smooth theme transitions without forcing them on every property. */
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-/*
- * Tabular numbers everywhere they appear (scores, deck counts,
- * timestamps): keeps columns aligned and avoids the cosmetic shake
- * when a score increments.
- */
 .tabular-nums,
 [data-tabular] {
   font-variant-numeric: tabular-nums;
 }
 
-/*
- * Focus-visible - accessibility baseline.
- * Buttons and links get a clearly visible ring keyboard-only.
- * Touch / mouse interactions are unaffected.
- */
 :focus-visible {
   outline: 2px solid var(--color-status-active);
   outline-offset: 2px;

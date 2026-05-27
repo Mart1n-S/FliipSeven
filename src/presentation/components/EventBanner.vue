@@ -40,7 +40,7 @@ const style = computed<BannerStyle>(() => {
         headline: `${e.playerPseudo} explose`,
         sub: `Doublon de ${e.duplicateCard.value} - toutes ses cartes sont défaussées`,
         accent: 'bg-status-busted',
-        tagClasses: 'text-status-busted',
+        tagClasses: 'text-status-busted-text',
       }
     case 'flip7':
       return {
@@ -48,7 +48,7 @@ const style = computed<BannerStyle>(() => {
         headline: `${e.playerPseudo} réussit le Flip 7`,
         sub: `7 cartes uniques, +15 points bonus`,
         accent: 'bg-status-flip7',
-        tagClasses: 'text-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     case 'frozen':
       return {
@@ -56,15 +56,15 @@ const style = computed<BannerStyle>(() => {
         headline: `${e.playerPseudo} gelé`,
         sub: 'Ses points du tour sont perdus',
         accent: 'bg-status-frozen',
-        tagClasses: 'text-status-frozen',
+        tagClasses: 'text-status-frozen-text',
       }
     case 'second-chance-save':
       return {
         tag: 'Seconde Chance',
         headline: `${e.playerPseudo} évite le pire`,
         sub: `Doublon de ${e.duplicateCard.value} neutralisé`,
-        accent: 'bg-emerald-400',
-        tagClasses: 'text-emerald-300',
+        accent: 'bg-accent-success',
+        tagClasses: 'text-accent-success-text',
       }
     case 'action-drawn':
       return {
@@ -72,15 +72,15 @@ const style = computed<BannerStyle>(() => {
         headline: `${e.playerPseudo} pioche un ${ACTION_LABEL[e.card.action]}`,
         sub: 'En attente de résolution',
         accent: 'bg-status-flip7',
-        tagClasses: 'text-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     case 'round-ended':
       return {
         tag: `Manche ${e.roundNumber}`,
         headline: 'Manche terminée',
         sub: 'Place au décompte des points',
-        accent: 'bg-indigo-400',
-        tagClasses: 'text-indigo-300',
+        accent: 'bg-accent-info',
+        tagClasses: 'text-accent-info-text',
       }
     case 'game-finished':
       return {
@@ -88,7 +88,7 @@ const style = computed<BannerStyle>(() => {
         headline: 'Partie terminée',
         sub: 'Le classement final est prêt',
         accent: 'bg-status-flip7',
-        tagClasses: 'text-status-flip7',
+        tagClasses: 'text-status-flip7-text',
       }
     default: {
       const _exhaustive: never = e
@@ -96,8 +96,8 @@ const style = computed<BannerStyle>(() => {
         tag: '',
         headline: String(_exhaustive),
         sub: '',
-        accent: 'bg-slate-500',
-        tagClasses: 'text-slate-400',
+        accent: 'bg-surface-border',
+        tagClasses: 'text-text-secondary',
       }
     }
   }
@@ -120,17 +120,17 @@ const style = computed<BannerStyle>(() => {
           <span aria-hidden="true">-</span>
           {{ style.tag }}
         </p>
-        <h3 class="mt-1 truncate text-lg font-semibold text-slate-100">
+        <h3 class="mt-1 truncate text-lg font-semibold text-text-primary">
           {{ style.headline }}
         </h3>
-        <p class="mt-0.5 truncate text-sm text-slate-400">
+        <p class="mt-0.5 truncate text-sm text-text-secondary">
           {{ style.sub }}
         </p>
 
         <!-- Card thumbnails when the event has cards to show. -->
         <div v-if="event.kind === 'second-chance-save'" class="mt-2.5 flex items-center gap-1.5">
           <CardView :card="event.duplicateCard" size="sm" />
-          <span class="text-xs text-slate-600">+</span>
+          <span class="text-xs text-text-tertiary">+</span>
           <CardView :card="event.secondChanceCard" size="sm" />
         </div>
         <div v-else-if="event.kind === 'action-drawn'" class="mt-2.5 flex items-center gap-1.5">
@@ -140,7 +140,7 @@ const style = computed<BannerStyle>(() => {
 
       <button
         type="button"
-        class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-surface-overlay hover:text-slate-200"
+        class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-text-tertiary transition hover:bg-surface-overlay hover:text-text-primary"
         aria-label="Fermer la bannière"
         @click="$emit('dismiss')"
       >

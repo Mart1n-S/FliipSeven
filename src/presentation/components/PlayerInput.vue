@@ -43,14 +43,14 @@ const avatarSeed = computed(() => {
       autocomplete="off"
       autocapitalize="words"
       spellcheck="false"
-      class="flex-1 rounded-lg bg-surface-raised px-3 py-2.5 text-base text-slate-100 ring-1 ring-surface-border placeholder:text-slate-500 focus:ring-2 focus:ring-status-active focus:outline-none"
+      class="flex-1 rounded-lg bg-surface-raised px-3 py-2.5 text-base text-text-primary ring-1 ring-surface-border placeholder:text-text-tertiary focus:ring-2 focus:ring-status-active focus:outline-none"
       @input="onInput"
     />
 
     <button
       v-if="canRemove"
       type="button"
-      class="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-500 ring-1 ring-surface-border transition hover:bg-surface-raised hover:text-status-busted hover:ring-status-busted/40"
+      class="flex size-10 shrink-0 items-center justify-center rounded-lg text-text-tertiary ring-1 ring-surface-border transition hover:bg-surface-raised hover:text-status-busted hover:ring-status-busted/40"
       :aria-label="`Retirer le joueur ${index + 1}`"
       @click="emit('remove')"
     >

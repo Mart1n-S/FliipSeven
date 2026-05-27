@@ -61,7 +61,7 @@ const stateClass = computed(() => {
 <template>
   <div
     :class="[sizeClass, stateClass]"
-    class="flex shrink-0 items-center justify-center rounded-full bg-surface-raised font-mono font-medium tracking-wider text-slate-200 select-none"
+    class="flex shrink-0 items-center justify-center rounded-full bg-surface-raised font-mono font-medium tracking-wider text-text-primary select-none"
     aria-hidden="true"
   >
     {{ initials }}

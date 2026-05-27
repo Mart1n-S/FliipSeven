@@ -64,7 +64,7 @@ function back() {
     <header class="mb-6 flex items-center gap-3">
       <button
         type="button"
-        class="flex size-10 items-center justify-center rounded-lg bg-surface-raised text-slate-300 ring-1 ring-surface-border transition hover:ring-slate-500"
+        class="flex size-10 items-center justify-center rounded-lg bg-surface-raised text-text-secondary ring-1 ring-surface-border transition hover:ring-slate-500"
         aria-label="Retour à l'accueil"
         @click="back"
       >
@@ -83,20 +83,22 @@ function back() {
         </svg>
       </button>
       <div class="min-w-0 flex-1">
-        <p class="text-[10px] font-semibold tracking-widest text-status-active uppercase">
+        <p class="text-[10px] font-semibold tracking-widest text-status-active-text uppercase">
           Nouvelle partie
         </p>
-        <h1 class="text-2xl font-bold text-slate-100">Qui joue ?</h1>
+        <h1 class="text-2xl font-bold text-text-primary">Qui joue ?</h1>
       </div>
     </header>
 
     <form class="flex flex-1 flex-col gap-4" @submit.prevent="start">
       <div class="flex items-center justify-between">
-        <p class="font-mono text-xs text-slate-500 tabular-nums">
-          <span class="text-slate-300">{{ pseudos.length }}</span>
-          <span class="text-slate-600">/ {{ MAX_PLAYERS }} joueurs</span>
+        <p class="font-mono text-xs text-text-tertiary tabular-nums">
+          <span class="text-text-secondary">{{ pseudos.length }}</span>
+          <span class="text-text-tertiary">/ {{ MAX_PLAYERS }} joueurs</span>
         </p>
-        <p class="text-[10px] tracking-wider text-slate-600 uppercase">Min. {{ MIN_PLAYERS }}</p>
+        <p class="text-[10px] tracking-wider text-text-tertiary uppercase">
+          Min. {{ MIN_PLAYERS }}
+        </p>
       </div>
 
       <ul class="flex flex-col gap-2">
@@ -113,7 +115,7 @@ function back() {
 
       <button
         type="button"
-        class="rounded-xl border border-dashed border-surface-border bg-transparent px-4 py-3 text-sm font-medium text-slate-400 transition hover:border-status-active hover:text-status-active disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-surface-border disabled:hover:text-slate-400"
+        class="rounded-xl border border-dashed border-surface-border bg-transparent px-4 py-3 text-sm font-medium text-text-secondary transition hover:border-status-active hover:text-status-active disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-surface-border disabled:hover:text-text-secondary"
         :disabled="pseudos.length >= MAX_PLAYERS"
         @click="addPlayer"
       >
@@ -122,7 +124,7 @@ function back() {
 
       <p
         v-if="errorMessage"
-        class="rounded-lg bg-status-busted/10 px-3 py-2 text-sm text-status-busted ring-1 ring-status-busted/30"
+        class="rounded-lg bg-status-busted/10 px-3 py-2 text-sm text-status-busted-text ring-1 ring-status-busted/30"
         role="alert"
       >
         {{ errorMessage }}
@@ -131,7 +133,7 @@ function back() {
       <div class="mt-auto pt-4">
         <button
           type="submit"
-          class="w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
+          class="w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
           :disabled="!isValid"
         >
           Démarrer la partie

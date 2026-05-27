@@ -44,13 +44,13 @@ void props
     <div
       class="w-full max-w-sm rounded-2xl bg-surface-raised p-5 shadow-2xl ring-1 ring-surface-border"
     >
-      <h2 class="text-base font-semibold text-slate-100">{{ title }}</h2>
-      <p class="mt-2 text-sm text-slate-400">{{ message }}</p>
+      <h2 class="text-base font-semibold text-text-primary">{{ title }}</h2>
+      <p class="mt-2 text-sm text-text-secondary">{{ message }}</p>
 
       <div class="mt-5 flex gap-2">
         <button
           type="button"
-          class="flex-1 rounded-xl bg-surface-base px-4 py-3 text-base font-semibold text-slate-200 ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98]"
+          class="flex-1 rounded-xl bg-surface-base px-4 py-3 text-base font-semibold text-text-primary ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98]"
           @click="emit('cancel')"
         >
           {{ cancelLabel }}
@@ -60,8 +60,8 @@ void props
           class="flex-1 rounded-xl px-4 py-3 text-base font-semibold shadow-lg transition active:scale-[0.98]"
           :class="
             destructive
-              ? 'bg-status-busted text-slate-950 shadow-status-busted/20 hover:brightness-110'
-              : 'bg-status-active text-slate-950 shadow-status-active/20 hover:brightness-110'
+              ? 'bg-status-busted text-text-inverse shadow-status-busted/20 hover:brightness-110'
+              : 'bg-status-active text-text-inverse shadow-status-active/20 hover:brightness-110'
           "
           @click="emit('confirm')"
         >

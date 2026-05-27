@@ -23,14 +23,14 @@ const emit = defineEmits<{
          of a long player list. -->
     <div class="mb-3 flex items-center justify-center gap-2">
       <Avatar :pseudo="currentPseudo" size="sm" :active="true" />
-      <p class="text-xs tracking-wide text-slate-500 uppercase">Au tour de</p>
-      <p class="text-sm font-semibold text-slate-100">{{ currentPseudo }}</p>
+      <p class="text-xs tracking-wide text-text-tertiary uppercase">Au tour de</p>
+      <p class="text-sm font-semibold text-text-primary">{{ currentPseudo }}</p>
     </div>
 
     <div class="flex gap-2">
       <button
         type="button"
-        class="flex-1 rounded-xl bg-surface-raised px-4 py-3.5 text-base font-semibold text-slate-200 ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:ring-surface-border"
+        class="flex-1 rounded-xl bg-surface-raised px-4 py-3.5 text-base font-semibold text-text-primary ring-1 ring-surface-border transition hover:ring-slate-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:ring-surface-border"
         :disabled="disabled"
         @click="emit('stay')"
       >
@@ -38,7 +38,7 @@ const emit = defineEmits<{
       </button>
       <button
         type="button"
-        class="flex-[1.2] rounded-xl bg-status-active px-4 py-3.5 text-base font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
+        class="flex-[1.2] rounded-xl bg-status-active px-4 py-3.5 text-base font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:brightness-100"
         :disabled="disabled"
         @click="emit('draw')"
       >

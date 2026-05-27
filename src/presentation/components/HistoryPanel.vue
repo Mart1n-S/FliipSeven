@@ -71,17 +71,17 @@ function describe(entry: HistoryEntry): string {
  * with the rest of the game.
  */
 const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
-  'round-start': 'text-emerald-300',
-  deal: 'text-slate-500',
-  draw: 'text-slate-300',
-  bust: 'text-status-busted',
-  flip7: 'text-status-flip7',
-  frozen: 'text-status-frozen',
-  'sc-save': 'text-emerald-300',
-  stay: 'text-status-active',
-  'action-resolved': 'text-status-flip7',
-  'round-end': 'text-indigo-300',
-  'game-finished': 'text-status-flip7',
+  'round-start': 'text-accent-success-text',
+  deal: 'text-text-tertiary',
+  draw: 'text-text-secondary',
+  bust: 'text-status-busted-text',
+  flip7: 'text-status-flip7-text',
+  frozen: 'text-status-frozen-text',
+  'sc-save': 'text-accent-success-text',
+  stay: 'text-status-active-text',
+  'action-resolved': 'text-status-flip7-text',
+  'round-end': 'text-accent-info-text',
+  'game-finished': 'text-status-flip7-text',
 }
 </script>
 
@@ -98,15 +98,17 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
     >
       <header class="flex items-center justify-between border-b border-surface-border px-4 py-3">
         <div>
-          <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Journal</p>
-          <h2 class="text-base font-semibold text-slate-100">Historique</h2>
-          <p class="mt-0.5 font-mono text-xs text-slate-500 tabular-nums">
+          <p class="text-[10px] font-semibold tracking-wider text-text-tertiary uppercase">
+            Journal
+          </p>
+          <h2 class="text-base font-semibold text-text-primary">Historique</h2>
+          <p class="mt-0.5 font-mono text-xs text-text-tertiary tabular-nums">
             {{ entries.length }} évènement{{ entries.length > 1 ? 's' : '' }}
           </p>
         </div>
         <button
           type="button"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
+          class="rounded-lg p-2 text-text-secondary transition hover:bg-surface-raised hover:text-text-primary"
           aria-label="Fermer le journal"
           @click="$emit('close')"
         >
@@ -126,7 +128,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
 
       <div
         v-if="entries.length === 0"
-        class="flex flex-1 items-center justify-center px-4 text-sm text-slate-500"
+        class="flex flex-1 items-center justify-center px-4 text-sm text-text-tertiary"
       >
         Aucun évènement pour l'instant.
       </div>
@@ -141,7 +143,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
             <p class="text-sm font-medium" :class="KIND_COLOR[entry.kind]">
               {{ describe(entry) }}
             </p>
-            <time class="font-mono text-xs whitespace-nowrap text-slate-500">
+            <time class="font-mono text-xs whitespace-nowrap text-text-tertiary">
               {{ formatTime(entry.timestamp) }}
             </time>
           </div>
@@ -167,7 +169,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
             "
             class="mt-2 rounded-lg bg-surface-raised p-2 ring-1 ring-surface-border"
           >
-            <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
+            <p class="mb-1.5 text-[10px] font-semibold tracking-wide text-text-tertiary uppercase">
               Jeu de {{ entry.playerPseudo }}
             </p>
             <div
@@ -176,7 +178,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
                 entry.hand.modifiers.length === 0 &&
                 entry.hand.secondChance === null
               "
-              class="text-xs text-slate-500 italic"
+              class="text-xs text-text-tertiary italic"
             >
               Aucune carte
             </div>
@@ -199,7 +201,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
 
           <div
             v-else-if="entry.kind === 'round-end'"
-            class="mt-1.5 grid grid-cols-1 gap-0.5 font-mono text-xs text-slate-400"
+            class="mt-1.5 grid grid-cols-1 gap-0.5 font-mono text-xs text-text-secondary"
           >
             <span v-for="s in entry.scores" :key="s.pseudo" class="flex justify-between gap-3">
               <span>{{ s.pseudo }}</span>

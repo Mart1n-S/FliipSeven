@@ -43,18 +43,19 @@ const completedRoundNumber = computed(() => props.game.roundNumber)
 <template>
   <section class="flex flex-1 flex-col gap-5 px-4 py-6">
     <header class="rounded-2xl bg-surface-raised p-4 ring-1 ring-surface-border">
-      <p class="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
-        Manche <span class="font-mono text-slate-300 tabular-nums">{{ completedRoundNumber }}</span>
+      <p class="text-[10px] font-semibold tracking-widest text-text-tertiary uppercase">
+        Manche
+        <span class="font-mono text-text-secondary tabular-nums">{{ completedRoundNumber }}</span>
         terminée
       </p>
-      <h2 class="mt-1 text-2xl font-bold text-slate-100">Place au décompte</h2>
+      <h2 class="mt-1 text-2xl font-bold text-text-primary">Place au décompte</h2>
       <div v-if="nextDealer" class="mt-3 flex items-center gap-2 text-sm">
-        <span class="text-slate-500">Prochain donneur :</span>
+        <span class="text-text-tertiary">Prochain donneur :</span>
         <span
           class="inline-flex items-center gap-1.5 rounded-md bg-surface-base py-0.5 pr-2.5 pl-1 ring-1 ring-surface-border"
         >
           <Avatar :pseudo="nextDealer.pseudo" size="sm" />
-          <span class="text-xs font-medium text-slate-200">{{ nextDealer.pseudo }}</span>
+          <span class="text-xs font-medium text-text-primary">{{ nextDealer.pseudo }}</span>
         </span>
       </div>
     </header>
@@ -67,26 +68,28 @@ const completedRoundNumber = computed(() => props.game.roundNumber)
       >
         <Avatar :pseudo="line.pseudo" size="md" />
         <div class="min-w-0 flex-1">
-          <p class="truncate font-semibold text-slate-100">{{ line.pseudo }}</p>
+          <p class="truncate font-semibold text-text-primary">{{ line.pseudo }}</p>
           <p
             class="font-mono text-xs tabular-nums"
-            :class="line.gained ? 'text-status-active' : 'text-slate-600'"
+            :class="line.gained ? 'text-status-active-text' : 'text-text-tertiary'"
           >
             {{ line.gained ? `+${line.delta} pts ce tour` : 'aucun point ce tour' }}
           </p>
         </div>
         <div class="shrink-0 text-right">
-          <p class="font-mono text-2xl leading-none font-bold text-slate-100 tabular-nums">
+          <p class="font-mono text-2xl leading-none font-bold text-text-primary tabular-nums">
             {{ line.total }}
           </p>
-          <p class="mt-1 font-mono text-[10px] tracking-wide text-slate-500 uppercase">pts total</p>
+          <p class="mt-1 font-mono text-[10px] tracking-wide text-text-tertiary uppercase">
+            pts total
+          </p>
         </div>
       </li>
     </ul>
 
     <button
       type="button"
-      class="mt-auto w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
+      class="mt-auto w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
       @click="$emit('next')"
     >
       Manche suivante

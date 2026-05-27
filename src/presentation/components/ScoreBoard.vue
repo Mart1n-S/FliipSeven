@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Player } from '@/domain/entities/Player'
 import Avatar from '@/presentation/components/Avatar.vue'
+import ThemeToggle from '@/presentation/components/ThemeToggle.vue'
 import rulesPdfUrl from '@/presentation/assets/rules/Rules-FliipSeven.pdf?url'
 
 defineProps<{
@@ -26,19 +27,19 @@ defineEmits<{
         <span
           class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-surface-raised px-2.5 py-1 text-[10px] font-semibold tracking-wider uppercase ring-1 ring-surface-border"
         >
-          <span class="text-slate-500">Manche</span>
-          <span class="font-mono text-slate-200 tabular-nums">{{
+          <span class="text-text-tertiary">Manche</span>
+          <span class="font-mono text-text-primary tabular-nums">{{
             roundNumber.toString().padStart(2, '0')
           }}</span>
         </span>
 
         <div v-if="dealer" class="flex min-w-0 items-center gap-1.5">
-          <span class="shrink-0 text-[11px] text-slate-500">Donneur</span>
+          <span class="shrink-0 text-[11px] text-text-tertiary">Donneur</span>
           <span
-            class="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-surface-raised py-0.5 pr-2.5 pl-1 ring-1 ring-surface-border"
+            class="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-raised py-0.5 pr-3 pl-0.5 ring-1 ring-surface-border"
           >
             <Avatar :pseudo="dealer.pseudo" size="sm" />
-            <span class="truncate text-xs font-medium text-slate-200">{{ dealer.pseudo }}</span>
+            <span class="truncate text-xs font-medium text-text-primary">{{ dealer.pseudo }}</span>
           </span>
         </div>
       </div>
@@ -46,7 +47,7 @@ defineEmits<{
       <div class="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
+          class="rounded-lg p-2 text-text-secondary transition hover:bg-surface-raised hover:text-text-primary"
           aria-label="Voir l'historique de la partie"
           @click="$emit('history')"
         >
@@ -70,7 +71,7 @@ defineEmits<{
           :href="rulesPdfUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-slate-200"
+          class="rounded-lg p-2 text-text-secondary transition hover:bg-surface-raised hover:text-text-primary"
           aria-label="Ouvrir le PDF des règles"
         >
           <!-- info (i) -->
@@ -89,9 +90,11 @@ defineEmits<{
           </svg>
         </a>
 
+        <ThemeToggle />
+
         <button
           type="button"
-          class="rounded-lg p-2 text-slate-400 transition hover:bg-surface-raised hover:text-rose-400"
+          class="rounded-lg p-2 text-text-secondary transition hover:bg-surface-raised hover:text-status-busted-text"
           aria-label="Quitter la partie"
           @click="$emit('quit')"
         >
@@ -116,13 +119,13 @@ defineEmits<{
       <div
         class="relative overflow-hidden rounded-xl bg-surface-raised px-3 py-2.5 ring-1 ring-surface-border"
       >
-        <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Pioche</p>
-        <p class="mt-0.5 font-mono text-2xl font-bold text-slate-100 tabular-nums">
+        <p class="text-[10px] font-semibold tracking-wider text-text-tertiary uppercase">Pioche</p>
+        <p class="mt-0.5 font-mono text-2xl font-bold text-text-primary tabular-nums">
           {{ deckSize }}
         </p>
         <!-- card silhouette -->
         <svg
-          class="absolute top-1.5 right-2 size-8 text-slate-700"
+          class="absolute top-1.5 right-2 size-8 text-text-quaternary"
           viewBox="0 0 24 32"
           fill="none"
           stroke="currentColor"
@@ -136,12 +139,14 @@ defineEmits<{
       <div
         class="relative overflow-hidden rounded-xl bg-surface-raised px-3 py-2.5 ring-1 ring-surface-border"
       >
-        <p class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">Défausse</p>
-        <p class="mt-0.5 font-mono text-2xl font-bold text-slate-100 tabular-nums">
+        <p class="text-[10px] font-semibold tracking-wider text-text-tertiary uppercase">
+          Défausse
+        </p>
+        <p class="mt-0.5 font-mono text-2xl font-bold text-text-primary tabular-nums">
           {{ discardSize }}
         </p>
         <svg
-          class="absolute top-1.5 right-2 size-8 text-slate-700"
+          class="absolute top-1.5 right-2 size-8 text-text-quaternary"
           viewBox="0 0 24 32"
           fill="none"
           stroke="currentColor"

@@ -32,10 +32,10 @@ function rankClasses(rank: number): string {
 }
 
 function rankBadgeClasses(rank: number): string {
-  if (rank === 0) return 'bg-status-flip7 text-slate-950'
-  if (rank === 1) return 'bg-slate-400 text-slate-950'
+  if (rank === 0) return 'bg-status-flip7 text-text-inverse'
+  if (rank === 1) return 'bg-slate-400 text-text-inverse'
   if (rank === 2) return 'bg-amber-800 text-amber-100'
-  return 'bg-surface-overlay text-slate-300'
+  return 'bg-surface-overlay text-text-secondary'
 }
 
 function rankLabel(rank: number): string {
@@ -46,13 +46,13 @@ function rankLabel(rank: number): string {
 <template>
   <section class="flex flex-1 flex-col gap-5 px-4 py-6">
     <header class="text-center">
-      <p class="text-[10px] font-semibold tracking-widest text-status-flip7 uppercase">
+      <p class="text-[10px] font-semibold tracking-widest text-status-flip7-text uppercase">
         Partie terminée
       </p>
-      <h2 v-if="winner" class="mt-2 text-4xl font-bold tracking-tight text-slate-100">
-        <span class="text-status-flip7">{{ winner.pseudo }}</span> gagne
+      <h2 v-if="winner" class="mt-2 text-4xl font-bold tracking-tight text-text-primary">
+        <span class="text-status-flip7-text">{{ winner.pseudo }}</span> gagne
       </h2>
-      <p class="mt-3 font-mono text-xs text-slate-500 tabular-nums">
+      <p class="mt-3 font-mono text-xs text-text-tertiary tabular-nums">
         {{ winner?.totalScore }} pts · {{ roundsPlayed }}
         {{ roundsPlayed > 1 ? 'manches' : 'manche' }} · seuil {{ WIN_THRESHOLD }}
       </p>
@@ -72,19 +72,19 @@ function rankLabel(rank: number): string {
           {{ rankLabel(rank) }}
         </span>
         <Avatar :pseudo="player.pseudo" size="sm" />
-        <span class="min-w-0 flex-1 truncate font-semibold text-slate-100">{{
+        <span class="min-w-0 flex-1 truncate font-semibold text-text-primary">{{
           player.pseudo
         }}</span>
-        <span class="shrink-0 font-mono text-lg font-bold text-slate-100 tabular-nums">
+        <span class="shrink-0 font-mono text-lg font-bold text-text-primary tabular-nums">
           {{ player.totalScore }}
-          <span class="text-xs font-normal text-slate-500">pts</span>
+          <span class="text-xs font-normal text-text-tertiary">pts</span>
         </span>
       </li>
     </ol>
 
     <button
       type="button"
-      class="mt-auto w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
+      class="mt-auto w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-text-inverse shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
       @click="$emit('replay')"
     >
       Rejouer

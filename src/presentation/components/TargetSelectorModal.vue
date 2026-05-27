@@ -62,19 +62,19 @@ const promptByAction = computed<Prompt>(() => {
     >
       <!-- Drag handle (purely decorative on web; no swipe-to-dismiss). -->
       <div class="flex justify-center pt-2.5 pb-1">
-        <span class="block h-1 w-10 rounded-full bg-slate-700" aria-hidden="true" />
+        <span class="block h-1 w-10 rounded-full bg-surface-border" aria-hidden="true" />
       </div>
 
       <header class="flex items-start gap-3 px-5 pt-3 pb-4">
         <CardView :card="card" size="md" />
         <div class="min-w-0 flex-1">
-          <h2 class="truncate text-lg font-semibold text-slate-100">
+          <h2 class="truncate text-lg font-semibold text-text-primary">
             {{ promptByAction.title }}
           </h2>
-          <p class="mt-0.5 truncate text-sm text-slate-400">
+          <p class="mt-0.5 truncate text-sm text-text-secondary">
             {{ promptByAction.subtitle }}
           </p>
-          <p class="mt-1.5 text-xs text-slate-500">
+          <p class="mt-1.5 text-xs text-text-tertiary">
             {{ promptByAction.cardLabel }}
           </p>
         </div>
@@ -88,10 +88,10 @@ const promptByAction = computed<Prompt>(() => {
             @click="$emit('select', choice.index)"
           >
             <Avatar :pseudo="choice.pseudo" size="sm" />
-            <span class="flex-1 truncate text-sm font-medium text-slate-100">{{
+            <span class="flex-1 truncate text-sm font-medium text-text-primary">{{
               choice.pseudo
             }}</span>
-            <span class="font-mono text-sm font-semibold text-slate-300 tabular-nums">
+            <span class="font-mono text-sm font-semibold text-text-secondary tabular-nums">
               {{ choice.roundScore }}
             </span>
           </button>
