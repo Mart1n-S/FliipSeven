@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { GameState } from '@/domain/entities/GameState'
 import { getStandings, WIN_THRESHOLD } from '@/domain/rules/game'
+import Avatar from '@/presentation/components/Avatar.vue'
 
 const props = defineProps<{
   game: GameState
@@ -16,11 +17,25 @@ const winner = computed(() => standings.value[0] ?? null)
 
 const roundsPlayed = computed(() => props.game.roundNumber)
 
+/**
+ * Visual treatment per podium rank.
+ * - 1st : amber ring + tinted surface (winner card already standalone)
+ * - 2nd : slate ring (silver hint)
+ * - 3rd : darker amber ring (bronze hint)
+ * - rest: default raised surface
+ */
 function rankClasses(rank: number): string {
-  if (rank === 0) return 'ring-2 ring-amber-400 bg-amber-500/10'
-  if (rank === 1) return 'ring-1 ring-slate-500 bg-slate-800'
-  if (rank === 2) return 'ring-1 ring-amber-900/60 bg-slate-800'
-  return 'bg-slate-800/80'
+  if (rank === 0) return 'bg-status-flip7/10 ring-2 ring-status-flip7'
+  if (rank === 1) return 'bg-surface-raised ring-1 ring-slate-500/60'
+  if (rank === 2) return 'bg-surface-raised ring-1 ring-amber-900/60'
+  return 'bg-surface-raised ring-1 ring-surface-border'
+}
+
+function rankBadgeClasses(rank: number): string {
+  if (rank === 0) return 'bg-status-flip7 text-slate-950'
+  if (rank === 1) return 'bg-slate-400 text-slate-950'
+  if (rank === 2) return 'bg-amber-800 text-amber-100'
+  return 'bg-surface-overlay text-slate-300'
 }
 
 function rankLabel(rank: number): string {
@@ -31,14 +46,15 @@ function rankLabel(rank: number): string {
 <template>
   <section class="flex flex-1 flex-col gap-5 px-4 py-6">
     <header class="text-center">
-      <p class="text-xs tracking-widest text-amber-300/80 uppercase">Partie terminée</p>
-      <h2 v-if="winner" class="mt-1 text-3xl font-bold text-amber-300">
-        {{ winner.pseudo }} gagne !
+      <p class="text-[10px] font-semibold tracking-widest text-status-flip7 uppercase">
+        Partie terminée
+      </p>
+      <h2 v-if="winner" class="mt-2 text-4xl font-bold tracking-tight text-slate-100">
+        <span class="text-status-flip7">{{ winner.pseudo }}</span> gagne
       </h2>
-      <p class="mt-2 text-sm text-slate-400">
-        {{ winner?.totalScore }} pts &nbsp;·&nbsp; {{ roundsPlayed }}
-        {{ roundsPlayed > 1 ? 'manches jouées' : 'manche jouée' }} &nbsp;·&nbsp; seuil
-        {{ WIN_THRESHOLD }}
+      <p class="mt-3 font-mono text-xs text-slate-500 tabular-nums">
+        {{ winner?.totalScore }} pts · {{ roundsPlayed }}
+        {{ roundsPlayed > 1 ? 'manches' : 'manche' }} · seuil {{ WIN_THRESHOLD }}
       </p>
     </header>
 
@@ -46,27 +62,29 @@ function rankLabel(rank: number): string {
       <li
         v-for="(player, rank) in standings"
         :key="player.id"
-        class="flex items-center justify-between rounded-xl px-4 py-3"
+        class="flex items-center gap-3 rounded-xl px-3 py-2.5"
         :class="rankClasses(rank)"
       >
-        <div class="flex items-center gap-3 truncate">
-          <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-            :class="rank === 0 ? 'bg-amber-400 text-amber-950' : 'bg-slate-700 text-slate-200'"
-          >
-            {{ rankLabel(rank) }}
-          </span>
-          <span class="truncate font-medium text-slate-100">{{ player.pseudo }}</span>
-        </div>
-        <span class="font-mono text-base text-indigo-200 tabular-nums">
-          {{ player.totalScore }} pts
+        <span
+          class="flex size-9 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold tabular-nums"
+          :class="rankBadgeClasses(rank)"
+        >
+          {{ rankLabel(rank) }}
+        </span>
+        <Avatar :pseudo="player.pseudo" size="sm" />
+        <span class="min-w-0 flex-1 truncate font-semibold text-slate-100">{{
+          player.pseudo
+        }}</span>
+        <span class="shrink-0 font-mono text-lg font-bold text-slate-100 tabular-nums">
+          {{ player.totalScore }}
+          <span class="text-xs font-normal text-slate-500">pts</span>
         </span>
       </li>
     </ol>
 
     <button
       type="button"
-      class="mt-auto w-full rounded-xl bg-indigo-500 px-6 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
+      class="mt-auto w-full rounded-xl bg-status-active px-6 py-4 text-lg font-semibold text-slate-950 shadow-lg shadow-status-active/20 transition hover:brightness-110 active:scale-[0.98]"
       @click="$emit('replay')"
     >
       Rejouer
