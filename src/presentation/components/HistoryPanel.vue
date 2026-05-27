@@ -29,7 +29,7 @@ function describe(entry: HistoryEntry): string {
         ? `${entry.playerPseudo} pioche (Trois à la Suite)`
         : `${entry.playerPseudo} pioche`
     case 'bust':
-      return `${entry.playerPseudo} bust sur un doublon de ${entry.duplicateValue}`
+      return `${entry.playerPseudo} éliminé sur un doublon de ${entry.duplicateValue}`
     case 'flip7':
       return `${entry.playerPseudo} fait Flip 7 ! (+${entry.roundScore} pts)`
     case 'frozen':

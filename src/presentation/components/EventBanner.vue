@@ -36,8 +36,8 @@ const style = computed<BannerStyle>(() => {
   switch (e.kind) {
     case 'bust':
       return {
-        tag: 'Bust',
-        headline: `${e.playerPseudo} explose`,
+        tag: 'Éliminé',
+        headline: `${e.playerPseudo} est éliminé`,
         sub: `Doublon de ${e.duplicateCard.value} - toutes ses cartes sont défaussées`,
         accent: 'bg-status-busted',
         tagClasses: 'text-status-busted-text',

@@ -26,7 +26,7 @@ const styleByStatus: Record<PlayerStatus, BadgeStyle | null> = {
     classes: 'bg-surface-overlay text-text-secondary ring-1 ring-surface-border',
   },
   busted: {
-    label: 'Bust',
+    label: 'Éliminé',
     classes: 'bg-status-busted/15 text-status-busted-text ring-1 ring-status-busted/30',
   },
   frozen: {

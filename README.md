@@ -13,12 +13,12 @@ L'application est directement accessible via GitHub Pages :
 
 ## 🎯 Principe du jeu
 
-Flip 7 est un jeu de **push-your-luck** : chaque manche, les joueurs piochent des cartes tour à tour pour accumuler des points — mais trop piocher, c'est risquer de perdre tout ce qu'on a gagné.
+Flip 7 est un jeu de **push-your-luck** : chaque manche, les joueurs piochent des cartes tour à tour pour accumuler des points - mais trop piocher, c'est risquer de perdre tout ce qu'on a gagné.
 
 ### Déroulement
 
 1. **Piocher ou s'arrêter.** À chaque tour, le joueur actif choisit de piocher une nouvelle carte ou de se coucher pour sécuriser ses points.
-2. **Cartes numériques (0–12).** Chaque carte posée ajoute sa valeur au score de la manche. Tirer un chiffre déjà présent devant soi → **Sauté** (score 0 pour la manche).
+2. **Cartes numériques (0–12).** Chaque carte posée ajoute sa valeur au score de la manche. Tirer un chiffre déjà présent devant soi → **Éliminé** (score 0 pour la manche).
 3. **Cartes modificatrices.** Des bonus viennent booster le score : `+2`, `+4`, `+6`, `+8`, `+10` (additifs) et `×2` (multiplicatif sur la somme des chiffres).
 4. **Cartes action.** Perturbent la partie des autres :
    - **Gel** – stoppe la cible pour le reste de la manche et annule ses points : elle marque 0 pour ce tour.
@@ -119,7 +119,7 @@ npm run typecheck     # Vérification des types TypeScript
 ## ✅ Fonctionnalités V1
 
 - Gestionnaire de partie complet sur un seul appareil (2–18 joueurs)
-- Règles officielles Flip 7 : bust, Gel, Trois à la Suite, Deuxième Chance, bonus Flip 7
+- Règles officielles Flip 7 : élimination, Gel, Trois à la Suite, Deuxième Chance, bonus Flip 7
 - Scoring automatique (additifs, ×2, bonus Flip 7 +15 pts)
 - Distribution automatique en début de manche
 - Journal de partie pour résoudre les litiges (snapshots des mains par manche)
