@@ -120,12 +120,10 @@ describe('rules: Flip Three', () => {
   it('forces the target to accept exactly three number cards', () => {
     const flip = makeFlipThree()
     // P1 draws the Flip Three then targets P2; the next 3 cards are P2's.
-    const game = inProgressGame(['active', 'active'], [
-      flip,
-      makeNumber(3),
-      makeNumber(5),
-      makeNumber(8),
-    ])
+    const game = inProgressGame(
+      ['active', 'active'],
+      [flip, makeNumber(3), makeNumber(5), makeNumber(8)],
+    )
 
     let g = drawCard(deps, game) // P1 pulls the Flip Three
     g = resolveAction(g, 1) // target P2
@@ -146,12 +144,10 @@ describe('rules: Flip Three', () => {
     // has been flipped.
     const flip = makeFlipThree()
     const revealedFreeze = makeFreeze(1)
-    const game = inProgressGame(['active', 'active', 'active'], [
-      flip,
-      revealedFreeze,
-      makeNumber(4),
-      makeNumber(6),
-    ])
+    const game = inProgressGame(
+      ['active', 'active', 'active'],
+      [flip, revealedFreeze, makeNumber(4), makeNumber(6)],
+    )
 
     let g = drawCard(deps, game)
     g = resolveAction(g, 1) // P2 is the Flip Three target
@@ -175,14 +171,18 @@ describe('rules: Flip Three', () => {
     // busted player still picks an active target for it.
     const flip = makeFlipThree()
     const revealedFreeze = makeFreeze(1)
-    const game = inProgressGame(['active', 'active', 'active'], [
-      flip,
-      makeNumber(5, 1), // busts P2
-      revealedFreeze, // revealed while busted -> still queued by P2
-      makeNumber(9),
-    ], {
-      playerStateOverrides: [{}, { numberCards: [makeNumber(5, 0)] }, {}],
-    })
+    const game = inProgressGame(
+      ['active', 'active', 'active'],
+      [
+        flip,
+        makeNumber(5, 1), // busts P2
+        revealedFreeze, // revealed while busted -> still queued by P2
+        makeNumber(9),
+      ],
+      {
+        playerStateOverrides: [{}, { numberCards: [makeNumber(5, 0)] }, {}],
+      },
+    )
 
     let g = drawCard(deps, game)
     g = resolveAction(g, 1)

@@ -73,8 +73,8 @@ function rankLabel(rank: number): string {
         {{ isTie ? 'ex æquo' : 'gagne' }}
       </h2>
       <p class="mt-3 font-mono text-xs text-text-tertiary tabular-nums">
-        {{ topScore }} pts · {{ roundsPlayed }}
-        {{ roundsPlayed > 1 ? 'manches' : 'manche' }} · seuil {{ WIN_THRESHOLD }}
+        {{ topScore }} pts · {{ roundsPlayed }} {{ roundsPlayed > 1 ? 'manches' : 'manche' }} ·
+        seuil {{ WIN_THRESHOLD }}
       </p>
     </header>
 

@@ -61,7 +61,7 @@ const reasonText = computed<string | null>(() => {
     case 'frozen':
       return `${reason.pseudo} a été gelé. Plus aucun joueur en jeu, la manche s'arrête.`
     case 'deck-empty':
-      return 'Plus aucune carte à piocher (toutes sont en jeu) : chaque joueur garde ses points et la manche s\'arrête.'
+      return "Plus aucune carte à piocher (toutes sont en jeu) : chaque joueur garde ses points et la manche s'arrête."
     case 'all-stopped':
       return 'Tous les joueurs se sont arrêtés ou ont été éliminés.'
     default: {
@@ -108,11 +108,7 @@ function isEmptyHand(hand: PlayerLine['hand']): boolean {
         v-if="reasonText"
         class="relative mt-3 overflow-hidden rounded-xl bg-surface-base py-2.5 pr-3 pl-4 ring-1 ring-surface-border"
       >
-        <span
-          class="absolute top-0 bottom-0 left-0 w-1"
-          :class="reasonAccent"
-          aria-hidden="true"
-        />
+        <span class="absolute top-0 bottom-0 left-0 w-1" :class="reasonAccent" aria-hidden="true" />
         <p class="text-sm text-text-secondary">{{ reasonText }}</p>
       </div>
 
@@ -166,10 +162,7 @@ function isEmptyHand(hand: PlayerLine['hand']): boolean {
           <CardView v-for="card in line.hand.modifiers" :key="card.id" :card="card" size="sm" />
           <CardView v-if="line.hand.secondChance" :card="line.hand.secondChance" size="sm" />
         </div>
-        <p
-          v-else-if="line.hand"
-          class="mt-2 text-xs text-text-tertiary italic"
-        >
+        <p v-else-if="line.hand" class="mt-2 text-xs text-text-tertiary italic">
           Aucune carte ce tour
         </p>
       </li>
