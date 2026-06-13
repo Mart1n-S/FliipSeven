@@ -34,9 +34,17 @@ defineEmits<{
         </span>
 
         <div v-if="dealer" class="flex min-w-0 items-center gap-1.5">
-          <span class="shrink-0 text-[11px] text-text-tertiary">Donneur</span>
+          <span class="hidden shrink-0 text-[11px] text-text-tertiary sm:inline">Donneur</span>
+          <!-- Mobile: just the dealer's initials (no pill) to save width. -->
+          <Avatar
+            :pseudo="dealer.pseudo"
+            size="sm"
+            class="sm:hidden"
+            :title="`Donneur : ${dealer.pseudo}`"
+          />
+          <!-- >= sm: full pill with the dealer's pseudo. -->
           <span
-            class="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-raised py-0.5 pr-3 pl-0.5 ring-1 ring-surface-border"
+            class="hidden min-w-0 items-center gap-1.5 rounded-full bg-surface-raised py-0.5 pr-3 pl-0.5 ring-1 ring-surface-border sm:inline-flex"
           >
             <Avatar :pseudo="dealer.pseudo" size="sm" />
             <span class="truncate text-xs font-medium text-text-primary">{{ dealer.pseudo }}</span>

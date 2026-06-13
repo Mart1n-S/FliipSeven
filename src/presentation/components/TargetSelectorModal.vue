@@ -58,14 +58,14 @@ const promptByAction = computed<Prompt>(() => {
     :aria-label="promptByAction.title"
   >
     <div
-      class="w-full max-w-md rounded-t-3xl border-t border-x border-surface-border bg-surface-base pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl"
+      class="flex max-h-[85vh] w-full max-w-md flex-col rounded-t-3xl border-t border-x border-surface-border bg-surface-base pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl"
     >
       <!-- Drag handle (purely decorative on web; no swipe-to-dismiss). -->
-      <div class="flex justify-center pt-2.5 pb-1">
+      <div class="flex shrink-0 justify-center pt-2.5 pb-1">
         <span class="block h-1 w-10 rounded-full bg-surface-border" aria-hidden="true" />
       </div>
 
-      <header class="flex items-start gap-3 px-5 pt-3 pb-4">
+      <header class="flex shrink-0 items-start gap-3 px-5 pt-3 pb-4">
         <CardView :card="card" size="md" />
         <div class="min-w-0 flex-1">
           <h2 class="truncate text-lg font-semibold text-text-primary">
@@ -80,7 +80,8 @@ const promptByAction = computed<Prompt>(() => {
         </div>
       </header>
 
-      <ul class="flex flex-col gap-2 px-3 pb-3">
+      <!-- Scrollable so every seat is reachable even with 18 players. -->
+      <ul class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
         <li v-for="choice in choices" :key="choice.index">
           <button
             type="button"

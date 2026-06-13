@@ -71,6 +71,15 @@ export function endRound(game: GameState): GameState {
     return cards
   })
 
+  // Any action card still in flight when the round ends must also go to
+  // the discard pile, otherwise it would vanish from the game and the
+  // deck would shrink round after round. This happens when the round
+  // ends mid-resolution, eg. the Flip Three target reaches Flip 7 on the
+  // last forced draw while a Freeze drawn earlier is still queued, or no
+  // active player remains to receive a pending action.
+  if (game.pendingAction !== null) collected.push(game.pendingAction.card)
+  for (const queued of game.actionQueue) collected.push(queued.card)
+
   const newDiscard: Card[] = [...game.discard, ...collected]
 
   const someoneWon = updatedPlayers.some((p) => p.totalScore >= WIN_THRESHOLD)

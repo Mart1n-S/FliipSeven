@@ -32,6 +32,7 @@ const {
   lastDrawnCardId,
   lastEvent,
   lastRoundScores,
+  lastRoundEnd,
   draw,
   stay,
   resolve,
@@ -145,6 +146,7 @@ function quit() {
       v-else-if="isBetweenRounds"
       :game="game"
       :round-scores="lastRoundScores"
+      :round-end="lastRoundEnd"
       @next="startNextRound"
     />
 

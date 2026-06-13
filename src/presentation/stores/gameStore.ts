@@ -16,11 +16,14 @@ import {
   type SecondChanceCard,
 } from '@/domain/entities/Card'
 import type { GameState } from '@/domain/entities/GameState'
+import type { PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { shouldEndRound } from '@/domain/entities/RoundState'
 import type { RandomProvider } from '@/domain/ports/RandomProvider'
 import { startRound } from '@/domain/rules/round'
 import { calculateRoundScore } from '@/domain/rules/score'
 import type { CardId } from '@/domain/value-objects/CardId'
+import type { NumberValue } from '@/domain/value-objects/NumberValue'
+import type { PlayerStatus } from '@/domain/value-objects/PlayerStatus'
 import { LocalStorageGameRepository } from '@/infrastructure/persistence/LocalStorageGameRepository'
 import { CryptoRandomProvider } from '@/infrastructure/random/CryptoRandomProvider'
 import {
@@ -30,7 +33,13 @@ import {
   saveHistory,
   snapshotHand,
   type HistoryEntry,
+  type PlayerHandSnapshot,
 } from '@/presentation/stores/history'
+import {
+  clearRoundSummary,
+  loadRoundSummary,
+  saveRoundSummary,
+} from '@/presentation/stores/roundSummary'
 
 interface StoreDeps {
   random: RandomProvider
@@ -90,6 +99,65 @@ export type GameEvent =
     }
   | { kind: 'round-ended'; roundNumber: number }
   | { kind: 'game-finished' }
+  // Deck AND discard were both empty (all 94 cards are on rows): nobody
+  // could draw, so the round was force-ended with everyone keeping their
+  // points. Surfaced so this rare situation is not silent.
+  | { kind: 'deck-empty' }
+
+/**
+ * Why the round that just ended came to a close. Surfaced at the top of
+ * the round-end screen so the reason is not missed when the table churns
+ * quickly (eg. the last active player busting). Flip 7 always wins as the
+ * headline; otherwise we report the transition that emptied the table.
+ */
+export type RoundEndReason =
+  | { kind: 'flip7'; pseudo: string }
+  | { kind: 'bust'; pseudo: string; duplicateValue: NumberValue }
+  | { kind: 'frozen'; pseudo: string }
+  | { kind: 'deck-empty' }
+  | { kind: 'all-stopped' }
+
+/** One player's final row + outcome, captured the instant a round ends. */
+export interface RoundEndPlayer {
+  readonly pseudo: string
+  readonly status: PlayerStatus
+  readonly hand: PlayerHandSnapshot
+  /** Points earned this round (0 when busted / frozen). */
+  readonly delta: number
+}
+
+export interface RoundEndSummary {
+  readonly reason: RoundEndReason
+  readonly players: readonly RoundEndPlayer[]
+}
+
+/**
+ * Derive the round-end reason from the final player states, preferring
+ * the transition that triggered the end (`triggeringEvent`) for the
+ * "no active player left" cases.
+ */
+function computeRoundEndReason(
+  states: readonly PlayerRoundState[],
+  pseudos: readonly string[],
+  triggeringEvent: GameEvent | null,
+): RoundEndReason {
+  if (triggeringEvent?.kind === 'deck-empty') return { kind: 'deck-empty' }
+
+  const flip7Index = states.findIndex((s) => s.status === 'flip7')
+  if (flip7Index >= 0) return { kind: 'flip7', pseudo: pseudos[flip7Index] ?? '' }
+
+  if (triggeringEvent?.kind === 'bust') {
+    return {
+      kind: 'bust',
+      pseudo: triggeringEvent.playerPseudo,
+      duplicateValue: triggeringEvent.duplicateCard.value,
+    }
+  }
+  if (triggeringEvent?.kind === 'frozen') {
+    return { kind: 'frozen', pseudo: triggeringEvent.playerPseudo }
+  }
+  return { kind: 'all-stopped' }
+}
 
 /**
  * Single source of truth for the current game.
@@ -110,6 +178,8 @@ export const useGameStore = defineStore('game', () => {
   const lastEvent: Ref<GameEvent | null> = ref(null)
   /** Per-player score earned in the round that just ended. Aligned on `game.players`. */
   const lastRoundScores: Ref<readonly number[] | null> = ref(null)
+  /** Snapshot of every player's final row + the reason the round ended. */
+  const lastRoundEnd: Ref<RoundEndSummary | null> = ref(null)
   /**
    * Append-only journal of every meaningful transition. Survives
    * reloads via localStorage and is intended for dispute resolution.
@@ -119,6 +189,13 @@ export const useGameStore = defineStore('game', () => {
   function persist(): void {
     if (game.value !== null) activeDeps.repository.save(game.value)
     saveHistory(history.value)
+    // Round-end screen hints live outside the GameState; persist them so
+    // an F5 / PWA relaunch on the round-end screen keeps all the detail.
+    saveRoundSummary({
+      lastRoundScores: lastRoundScores.value,
+      lastRoundEnd: lastRoundEnd.value,
+      lastEvent: lastEvent.value,
+    })
   }
 
   function appendHistory(...entries: readonly HistoryEntry[]): void {
@@ -135,6 +212,20 @@ export const useGameStore = defineStore('game', () => {
     // so the RoundEndView can show the delta for each player.
     const deltas = current.round.playerStates.map((state) => calculateRoundScore(state).total)
     lastRoundScores.value = deltas
+
+    // Snapshot every final row + why the round ended, so the round-end
+    // screen can show each player's cards and the headline reason without
+    // forcing the user into the history panel.
+    const pseudos = current.players.map((p) => p.pseudo)
+    lastRoundEnd.value = {
+      reason: computeRoundEndReason(current.round.playerStates, pseudos, lastEvent.value),
+      players: current.round.playerStates.map((state, i) => ({
+        pseudo: pseudos[i] ?? '',
+        status: state.status,
+        hand: snapshotHand(state),
+        delta: deltas[i] ?? 0,
+      })),
+    }
 
     const scoresForHistory = current.players.map((player, i) => {
       const delta = deltas[i] ?? 0
@@ -319,6 +410,26 @@ export const useGameStore = defineStore('game', () => {
     return entries
   }
 
+  /** A `frozen` event when a just-resolved Freeze locked the target, else null. */
+  function detectFreezeEvent(
+    before: GameState,
+    after: GameState,
+    targetIndex: number | null,
+  ): GameEvent | null {
+    if (targetIndex === null || before.round === null || after.round === null) return null
+    if (
+      before.round.playerStates[targetIndex]?.status === 'active' &&
+      after.round.playerStates[targetIndex]?.status === 'frozen'
+    ) {
+      return {
+        kind: 'frozen',
+        playerIndex: targetIndex,
+        playerPseudo: after.players[targetIndex]?.pseudo ?? '',
+      }
+    }
+    return null
+  }
+
   // ----- actions ---------------------------------------------------
 
   /** Hydrate from the persistence layer. Returns whether a game was found. */
@@ -327,6 +438,12 @@ export const useGameStore = defineStore('game', () => {
     if (saved === null) return false
     game.value = saved
     history.value = loadHistory()
+    // Restore the round-end screen hints so a reload keeps the +pts,
+    // the final hands and the reason banner intact.
+    const summary = loadRoundSummary()
+    lastRoundScores.value = summary?.lastRoundScores ?? null
+    lastRoundEnd.value = summary?.lastRoundEnd ?? null
+    lastEvent.value = summary?.lastEvent ?? null
     return true
   }
 
@@ -336,6 +453,7 @@ export const useGameStore = defineStore('game', () => {
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    lastRoundEnd.value = null
     history.value = []
 
     // Log the first round-start (startGame already opened round 1).
@@ -357,11 +475,20 @@ export const useGameStore = defineStore('game', () => {
     // use-case and we cannot pre-determine which card will come out; we
     // accept the highlight being skipped for that single draw.
     const topCard = before.deck[0] ?? null
+    // Deck AND discard empty: drawCard force-ends the round instead of
+    // dealing a card. Surface it explicitly (banner + journal) so it is
+    // not a silent "everyone stopped".
+    const deckExhausted = before.deck.length === 0 && before.discard.length === 0
     const after = drawCard({ random: activeDeps.random }, before)
     game.value = after
     lastDrawnCardId.value = topCard?.id ?? null
-    lastEvent.value = detectEventAfterDraw(before, after, topCard)
-    appendHistory(...buildDrawHistoryEntries(before, after, topCard))
+    if (deckExhausted) {
+      lastEvent.value = { kind: 'deck-empty' }
+      appendHistory({ kind: 'deck-empty', timestamp: nowIso() })
+    } else {
+      lastEvent.value = detectEventAfterDraw(before, after, topCard)
+      appendHistory(...buildDrawHistoryEntries(before, after, topCard))
+    }
     endRoundIfReady()
     persist()
   }
@@ -429,7 +556,9 @@ export const useGameStore = defineStore('game', () => {
     }
 
     lastDrawnCardId.value = null
-    lastEvent.value = null
+    // Keep the banner (and round-end reason) on a Freeze that just locked
+    // a player; clear it otherwise.
+    lastEvent.value = detectFreezeEvent(before, after, targetIndex)
     endRoundIfReady()
     persist()
   }
@@ -441,6 +570,7 @@ export const useGameStore = defineStore('game', () => {
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    lastRoundEnd.value = null
     if (next.round !== null) {
       appendHistory({
         kind: 'round-start',
@@ -455,15 +585,19 @@ export const useGameStore = defineStore('game', () => {
   function reset(): void {
     activeDeps.repository.clear()
     clearHistory()
+    clearRoundSummary()
     game.value = null
     lastDrawnCardId.value = null
     lastEvent.value = null
     lastRoundScores.value = null
+    lastRoundEnd.value = null
     history.value = []
   }
 
   function dismissEvent(): void {
     lastEvent.value = null
+    // Persist the dismissal so the banner does not reappear on reload.
+    persist()
   }
 
   // ----- getters ---------------------------------------------------
@@ -479,6 +613,7 @@ export const useGameStore = defineStore('game', () => {
     lastDrawnCardId,
     lastEvent,
     lastRoundScores,
+    lastRoundEnd,
     history,
     phase,
     isInRound,

@@ -368,6 +368,134 @@ describe('gameStore: UI hints (lastDrawnCardId, lastEvent)', () => {
   })
 })
 
+describe('gameStore: round-end summary (lastRoundEnd)', () => {
+  it('captures each player row and an "all-stopped" reason when everyone stays', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.stay()
+    store.stay()
+
+    expect(store.lastRoundEnd).not.toBeNull()
+    expect(store.lastRoundEnd?.players).toHaveLength(2)
+    expect(store.lastRoundEnd?.players[0]?.status).toBe('stayed')
+    expect(store.lastRoundEnd?.reason).toEqual({ kind: 'all-stopped' })
+  })
+
+  it('reports a bust reason naming the player and duplicate when the last active player busts', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const duplicate: NumberCard = { id: createCardId('number-7-1'), kind: 'number', value: 7 }
+    const existing: NumberCard = { id: createCardId('number-7-0'), kind: 'number', value: 7 }
+
+    // Bob (index 1) already stayed; Alice (index 0) is the last active
+    // player and busts on a duplicate 7 -> the round ends on her bust.
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [duplicate, ...baseGame.deck],
+        dealQueue: null,
+        round: {
+          ...round,
+          activePlayerIndex: 0,
+          playerStates: round.playerStates.map((s, i) => {
+            if (i === 0) return { ...s, numberCards: [existing] }
+            return { ...s, status: 'stayed' as const }
+          }),
+        },
+      },
+    })
+
+    store.draw()
+
+    expect(store.game?.phase).toBe('between-rounds')
+    expect(store.lastRoundEnd?.reason).toEqual({
+      kind: 'bust',
+      pseudo: 'Alice',
+      duplicateValue: 7,
+    })
+  })
+
+  it('reports a flip7 reason when a Flip 7 ends the round', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+
+    const seventh: NumberCard = { id: createCardId('number-7-final'), kind: 'number', value: 7 }
+    const sixCards: NumberCard[] = [1, 2, 3, 4, 5, 6].map((v) => ({
+      id: createCardId(`number-${v}-0`),
+      kind: 'number',
+      value: v as NumberCard['value'],
+    }))
+
+    const round = baseGame.round!
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [seventh, ...baseGame.deck],
+        dealQueue: null,
+        round: {
+          ...round,
+          activePlayerIndex: 0,
+          playerStates: round.playerStates.map((s, i) =>
+            i === 0 ? { ...s, numberCards: sixCards } : s,
+          ),
+        },
+      },
+    })
+
+    store.draw()
+
+    expect(store.lastRoundEnd?.reason).toEqual({ kind: 'flip7', pseudo: 'Alice' })
+  })
+
+  it('reports a deck-empty reason (and journals it) when no cards remain to draw', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    const baseGame = store.game!
+    const round = baseGame.round!
+
+    // Force the worst case: every card is on a row, so deck AND discard
+    // are empty. A draw cannot deal anything -> the round force-ends.
+    store.$patch({
+      game: {
+        ...baseGame,
+        deck: [],
+        discard: [],
+        dealQueue: null,
+        round: { ...round, activePlayerIndex: 0 },
+      },
+    })
+
+    store.draw()
+
+    expect(store.game?.phase).toBe('between-rounds')
+    expect(store.lastEvent).toEqual({ kind: 'deck-empty' })
+    expect(store.lastRoundEnd?.reason).toEqual({ kind: 'deck-empty' })
+    expect(store.history.some((e) => e.kind === 'deck-empty')).toBe(true)
+  })
+
+  it('startNextRound and reset clear lastRoundEnd', () => {
+    const store = useGameStore()
+    store.newGame(['Alice', 'Bob'])
+    store.stay()
+    store.stay()
+    expect(store.lastRoundEnd).not.toBeNull()
+
+    store.startNextRound()
+    expect(store.lastRoundEnd).toBeNull()
+
+    store.stay()
+    store.stay()
+    expect(store.lastRoundEnd).not.toBeNull()
+
+    store.reset()
+    expect(store.lastRoundEnd).toBeNull()
+  })
+})
+
 describe('gameStore: persistence', () => {
   it('loadFromStorage returns false when nothing was persisted', () => {
     const store = useGameStore()
@@ -385,5 +513,24 @@ describe('gameStore: persistence', () => {
     const reloaded = useGameStore()
     expect(reloaded.loadFromStorage()).toBe(true)
     expect(reloaded.game).toEqual(snapshot)
+  })
+
+  it('restores the round-end screen hints (scores, hands, reason) after a reload', () => {
+    const seed = useGameStore()
+    seed.newGame(['Alice', 'Bob'])
+    seed.stay()
+    seed.stay() // round ends -> hints captured and persisted
+
+    const scores = [...(seed.lastRoundScores ?? [])]
+    const reason = seed.lastRoundEnd?.reason
+
+    // Fresh Pinia instance to simulate an F5 / PWA relaunch.
+    setActivePinia(createPinia())
+    const reloaded = useGameStore()
+    expect(reloaded.loadFromStorage()).toBe(true)
+
+    expect(reloaded.lastRoundScores).toEqual(scores)
+    expect(reloaded.lastRoundEnd?.reason).toEqual(reason)
+    expect(reloaded.lastRoundEnd?.players).toHaveLength(2)
   })
 })

@@ -90,6 +90,14 @@ const style = computed<BannerStyle>(() => {
         accent: 'bg-status-flip7',
         tagClasses: 'text-status-flip7-text',
       }
+    case 'deck-empty':
+      return {
+        tag: 'Pioche vide',
+        headline: 'Plus aucune carte à piocher',
+        sub: 'Toutes les cartes sont en jeu - chacun garde ses points, la manche se termine',
+        accent: 'bg-accent-info',
+        tagClasses: 'text-accent-info-text',
+      }
     default: {
       const _exhaustive: never = e
       return {

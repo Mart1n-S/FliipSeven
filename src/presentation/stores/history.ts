@@ -111,6 +111,12 @@ export type HistoryEntry =
       readonly winnerPseudo: string
       readonly timestamp: string
     }
+  | {
+      // Deck and discard both empty (all cards on rows): the round was
+      // force-ended with every active player keeping their points.
+      readonly kind: 'deck-empty'
+      readonly timestamp: string
+    }
 
 export const HISTORY_STORAGE_KEY = 'flip7:history-v1'
 

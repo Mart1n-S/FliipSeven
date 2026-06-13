@@ -380,9 +380,27 @@ describe('drawCard: deck reshuffle', () => {
     expect(next.round?.playerStates[0]?.numberCards).toHaveLength(1)
   })
 
-  it('throws when both deck and discard are empty', () => {
+  it('forces every active player to stay when deck and discard are both empty', () => {
+    // All 94 cards are on rows: nobody can draw, so instead of crashing
+    // the round is steered to its end by staying every active player
+    // (they keep the points already in front of them).
     const game = inProgressGame(['active', 'active'], [])
-    expect(() => drawCard(deps, game)).toThrow(/empty/)
+    const next = drawCard(deps, game)
+
+    expect(next.round?.playerStates.every((s) => s.status === 'stayed')).toBe(true)
+    expect(next.forcedDraws).toBeNull()
+  })
+
+  it('clears an in-progress forced sequence when no cards remain', () => {
+    const game: GameState = {
+      ...inProgressGame(['active', 'busted'], []),
+      forcedDraws: { targetIndex: 0, remaining: 2 },
+    }
+    const next = drawCard(deps, game)
+
+    expect(next.forcedDraws).toBeNull()
+    expect(next.round?.playerStates[0]?.status).toBe<PlayerStatus>('stayed')
+    expect(next.round?.playerStates[1]?.status).toBe<PlayerStatus>('busted')
   })
 })
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { ModifierCard, NumberCard, SecondChanceCard } from '@/domain/entities/Card'
+import type {
+  FlipThreeCard,
+  FreezeCard,
+  ModifierCard,
+  NumberCard,
+  SecondChanceCard,
+} from '@/domain/entities/Card'
 import type { GameState } from '@/domain/entities/GameState'
 import { createPlayerRoundState, type PlayerRoundState } from '@/domain/entities/PlayerRoundState'
 import { createGame, WIN_THRESHOLD } from '@/domain/rules/game'
@@ -26,6 +32,14 @@ function makeSC(index = 0): SecondChanceCard {
     kind: 'action',
     action: 'second-chance',
   }
+}
+
+function makeFreeze(index = 0): FreezeCard {
+  return { id: createCardId(`action-freeze-${index}`), kind: 'action', action: 'freeze' }
+}
+
+function makeFlipThree(index = 0): FlipThreeCard {
+  return { id: createCardId(`action-flip-three-${index}`), kind: 'action', action: 'flip-three' }
 }
 
 function freshGame(pseudos = ['Alice', 'Bob', 'Charlie']): GameState {
@@ -140,6 +154,48 @@ describe('endRound', () => {
     expect(game.discard).toHaveLength(5) // 2 numbers + 1 mod + 1 SC + 1 number (busted)
     expect(game.discard).toContain(sc)
     expect(game.round).toBeNull()
+  })
+
+  it('returns an in-flight pending action card to the discard pile', () => {
+    // Regression: when a round ends while an action card is still
+    // awaiting resolution, the card must not vanish from the game.
+    const pending = makeFreeze()
+    const states: PlayerRoundState[] = [
+      { ...createPlayerRoundState(createPlayerId('p1')), status: 'busted' },
+      { ...createPlayerRoundState(createPlayerId('p2')), status: 'stayed' },
+    ]
+    const base = inProgressGame(states)
+    const game = endRound({ ...base, pendingAction: { card: pending, originIndex: 0 } })
+
+    expect(game.discard).toContain(pending)
+    expect(game.pendingAction).toBeNull()
+  })
+
+  it('returns queued action cards to the discard pile', () => {
+    // Regression: action cards queued during a Flip Three that is cut
+    // short (eg. Flip 7 on the last forced draw) must be conserved.
+    const queued1 = makeFreeze(1)
+    const queued2 = makeFlipThree(1)
+    const states: PlayerRoundState[] = [
+      {
+        ...createPlayerRoundState(createPlayerId('p1')),
+        numberCards: Array.from({ length: 7 }, (_, i) => makeNumber((i + 1) as NumberValue, i)),
+        status: 'flip7',
+      },
+      { ...createPlayerRoundState(createPlayerId('p2')), status: 'busted' },
+    ]
+    const base = inProgressGame(states)
+    const game = endRound({
+      ...base,
+      actionQueue: [
+        { card: queued1, originIndex: 0 },
+        { card: queued2, originIndex: 0 },
+      ],
+    })
+
+    expect(game.discard).toContain(queued1)
+    expect(game.discard).toContain(queued2)
+    expect(game.actionQueue).toEqual([])
   })
 
   it('switches to `between-rounds` and rotates the dealer when nobody won', () => {

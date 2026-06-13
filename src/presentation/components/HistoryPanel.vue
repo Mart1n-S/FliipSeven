@@ -58,6 +58,8 @@ function describe(entry: HistoryEntry): string {
       return `Fin de la manche ${entry.roundNumber}`
     case 'game-finished':
       return `Partie terminée - vainqueur : ${entry.winnerPseudo}`
+    case 'deck-empty':
+      return 'Pioche et défausse vides : la manche se termine (chacun garde ses points)'
     default: {
       const _exhaustive: never = entry
       return String(_exhaustive)
@@ -82,6 +84,7 @@ const KIND_COLOR: Record<HistoryEntry['kind'], string> = {
   'action-resolved': 'text-status-flip7-text',
   'round-end': 'text-accent-info-text',
   'game-finished': 'text-status-flip7-text',
+  'deck-empty': 'text-accent-info-text',
 }
 </script>
 

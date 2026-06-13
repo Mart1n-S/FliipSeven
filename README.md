@@ -25,7 +25,7 @@ Flip 7 est un jeu de **push-your-luck** : chaque manche, les joueurs piochent de
    - **Trois à la Suite** – la cible doit piocher 3 cartes supplémentaires, qu'elle le veuille ou non.
    - **Deuxième Chance** – protège d'une élimination imminente.
 5. **Flip 7.** Collecter 7 cartes numériques différentes déclenche le Flip 7 et accorde un bonus de **+15 points**.
-6. **Victoire.** La partie se termine quand un joueur franchit **200 points** en cumul. Le joueur avec le score le plus élevé gagne.
+6. **Victoire.** La partie se termine quand un joueur franchit **200 points** en cumul. Le joueur avec le score le plus élevé gagne, en cas d'égalité en tête, les joueurs concernés sont déclarés **ex æquo**.
 
 ## 🛠️ Stack technique
 
@@ -116,14 +116,22 @@ npm run format:check  # Vérification du formatage
 npm run typecheck     # Vérification des types TypeScript
 ```
 
+## 🚀 Déploiement (CI/CD)
+
+Deux workflows GitHub Actions :
+
+- **CI** (`.github/workflows/ci.yml`), sur chaque push et pull request vers `main` : lint, typecheck, vérification du formatage, **tests** et build.
+- **Déploiement** (`.github/workflows/deploy.yml`), sur push vers `main` (ou déclenchement manuel) : la **suite de tests doit passer avant** la construction et la publication sur GitHub Pages. Un build rouge n'est jamais déployé.
+
 ## ✅ Fonctionnalités V1
 
 - Gestionnaire de partie complet sur un seul appareil (2–18 joueurs)
 - Règles officielles Flip 7 : élimination, Gel, Trois à la Suite, Deuxième Chance, bonus Flip 7
 - Scoring automatique (additifs, ×2, bonus Flip 7 +15 pts)
 - Distribution automatique en début de manche
+- Récapitulatif de fin de manche : mains finales de chaque joueur, points gagnés et raison de fin (Flip 7, élimination, gel…)
 - Journal de partie pour résoudre les litiges (snapshots des mains par manche)
-- Persistance de la partie (reprise après fermeture du navigateur)
+- Persistance de la partie (reprise après fermeture du navigateur, y compris le détail de l'écran de fin de manche)
 - Thème clair / sombre (préférence OS détectée, persistée, sans flash au chargement)
 - PWA : installable sur l'écran d'accueil, mode hors-ligne
 - Design responsive mobile-first

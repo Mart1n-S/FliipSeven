@@ -90,3 +90,17 @@ export function getWinner(game: GameState): Player | null {
   const standings = getStandings(game)
   return standings[0] ?? null
 }
+
+/**
+ * Every player sharing the top total score once the game is finished
+ * (more than one when the leaders are tied). Returns an empty array
+ * while the game is still running. Used by the end screen to declare
+ * co-winners instead of silently picking one.
+ */
+export function getWinners(game: GameState): readonly Player[] {
+  if (!isGameOver(game)) return []
+  const standings = getStandings(game)
+  const top = standings[0]
+  if (top === undefined) return []
+  return standings.filter((p) => p.totalScore === top.totalScore)
+}

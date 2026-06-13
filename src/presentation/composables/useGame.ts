@@ -24,6 +24,7 @@ export function useGame() {
     lastDrawnCardId,
     lastEvent,
     lastRoundScores,
+    lastRoundEnd,
   } = storeToRefs(store)
 
   const activePlayer = computed<Player | null>(() => {
@@ -76,6 +77,7 @@ export function useGame() {
     lastDrawnCardId,
     lastEvent,
     lastRoundScores,
+    lastRoundEnd,
 
     // computed
     activePlayer,

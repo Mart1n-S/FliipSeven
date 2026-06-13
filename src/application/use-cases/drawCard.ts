@@ -85,6 +85,15 @@ export function drawCard(deps: DrawCardDeps, game: GameState): GameState {
   const round = game.round
   const wasInForcedDraws = game.forcedDraws !== null
   const wasInDealPhase = !wasInForcedDraws && game.dealQueue !== null && game.dealQueue.length > 0
+
+  // No cards left anywhere (all 94 are on the rows): nobody can draw, so
+  // the round is over. This is reachable at high player counts when many
+  // rows hoard cards. Rather than crash, force every still-active player
+  // to stay - they keep the points already in front of them.
+  if (game.deck.length === 0 && game.discard.length === 0) {
+    return forceStayAllActive(game, round)
+  }
+
   const targetIndex = pickTargetIndex(game, round)
   const targetState = resolveDrawTarget(round, targetIndex, wasInForcedDraws)
 
@@ -153,9 +162,33 @@ function ensureDeck(
 ): { deck: readonly Card[]; discard: readonly Card[] } {
   if (deck.length > 0) return { deck, discard }
   if (discard.length === 0) {
+    // Guarded against by the empty-deck check in `drawCard`; kept as a
+    // defensive invariant so a future caller cannot silently misbehave.
     throw new Error('drawCard: deck and discard are both empty.')
   }
   return { deck: shuffle(discard, random), discard: [] }
+}
+
+/**
+ * No card can be drawn (deck and discard both empty - every card is on a
+ * row). Force every active player to stay so the round can settle via
+ * `shouldEndRound`. Active players keep the points already on their row
+ * (they did not bust); busted / frozen / stayed players are untouched.
+ *
+ * `forcedDraws` and `dealQueue` are cleared (no card can satisfy them).
+ * `actionQueue` is intentionally left for `endRound` to discard so no
+ * card is lost.
+ */
+function forceStayAllActive(game: GameState, round: RoundState): GameState {
+  const playerStates = round.playerStates.map((s) =>
+    s.status === 'active' ? { ...s, status: 'stayed' as const } : s,
+  )
+  return {
+    ...game,
+    round: { ...round, playerStates },
+    forcedDraws: null,
+    dealQueue: null,
+  }
 }
 
 /**

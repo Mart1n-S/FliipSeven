@@ -4,6 +4,7 @@ import {
   createGame,
   getStandings,
   getWinner,
+  getWinners,
   isGameOver,
   MAX_PLAYERS,
   MIN_PLAYERS,
@@ -113,5 +114,41 @@ describe('getWinner', () => {
     }
 
     expect(getWinner(game)?.pseudo).toBe('Bob')
+  })
+})
+
+describe('getWinners', () => {
+  it('returns an empty array while the game is not finished', () => {
+    expect(getWinners(createGame(['Alice', 'Bob'], []))).toEqual([])
+  })
+
+  it('returns the single leader when there is no tie', () => {
+    const base = createGame(['Alice', 'Bob', 'Charlie'], [])
+    const game: GameState = {
+      ...base,
+      phase: 'finished',
+      players: [
+        { ...base.players[0]!, totalScore: 210 },
+        { ...base.players[1]!, totalScore: 150 },
+        { ...base.players[2]!, totalScore: 200 },
+      ],
+    }
+
+    expect(getWinners(game).map((p) => p.pseudo)).toEqual(['Alice'])
+  })
+
+  it('returns every player sharing the top score when the leaders tie', () => {
+    const base = createGame(['Alice', 'Bob', 'Charlie'], [])
+    const game: GameState = {
+      ...base,
+      phase: 'finished',
+      players: [
+        { ...base.players[0]!, totalScore: 205 },
+        { ...base.players[1]!, totalScore: 180 },
+        { ...base.players[2]!, totalScore: 205 },
+      ],
+    }
+
+    expect(getWinners(game).map((p) => p.pseudo)).toEqual(['Alice', 'Charlie'])
   })
 })
