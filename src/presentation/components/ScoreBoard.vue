@@ -59,18 +59,16 @@ defineEmits<{
           aria-label="Voir l'historique de la partie"
           @click="$emit('history')"
         >
-          <!-- 3 horizontal lines -->
+          <!-- history: clock face with a counter-clockwise (rewind) arrow -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
+            viewBox="0 0 24 24"
             fill="currentColor"
             class="size-5"
             aria-hidden="true"
           >
             <path
-              fill-rule="evenodd"
-              d="M2 5.75A.75.75 0 0 1 2.75 5h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 5.75ZM2 10a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm.75 3.5a.75.75 0 0 0 0 1.5h7.5a.75.75 0 0 0 0-1.5h-7.5Z"
-              clip-rule="evenodd"
+              d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
             />
           </svg>
         </button>
