@@ -50,10 +50,12 @@ interface ForcedProgression {
  *
  * Flip Three sequence: per the rule book, the three cards are flipped
  * even if the target busts mid-sequence. After the bust, Number /
- * Modifier cards are simply sent to the discard pile (they do not
- * touch the busted player's row); Action cards are still queued and
- * resolved afterwards, with the busted target choosing where to send
- * them. The sequence still ends early on Flip 7 (per "le jeu s'arrête").
+ * Modifier cards still join the busted player's row (the player must
+ * "accept" all three flipped cards - the row scores 0 anyway and is
+ * discarded at end of round), so the player can see exactly what was
+ * flipped. Action cards are still queued and resolved afterwards, with
+ * the busted target choosing where to send them. The sequence still
+ * ends early on Flip 7 (per "le jeu s'arrête").
  *
  * Turn rotation: after a **normal-play** draw (i.e. not part of a
  * forced-draws sequence and not part of the initial deal), the active
@@ -196,8 +198,12 @@ function forceStayAllActive(game: GameState, round: RoundState): GameState {
  *
  * - Active target: Number / Modifier go through the domain rules,
  *   Action cards are queued (forced sequence) or set as pending.
- * - Busted target during a forced sequence: Number / Modifier go
- *   straight to the discard pile, Action cards are still queued.
+ * - Busted target during a forced sequence: per the rule book the target
+ *   must still "accept" the remaining flipped cards, so Number / Modifier
+ *   cards stay on their (busted, 0-scoring) row - this keeps them visible
+ *   to the player instead of silently vanishing. They go to the discard
+ *   pile at end of round like the rest of the row. Action cards are still
+ *   queued for resolution afterwards.
  */
 function applyCardToTarget(
   card: Card,
@@ -208,7 +214,9 @@ function applyCardToTarget(
   const targetIsActive = targetState.status === 'active'
 
   if (isNumberCard(card)) {
-    if (!targetIsActive) return discardOnly(targetState, card)
+    if (!targetIsActive) {
+      return keepOnRow({ ...targetState, numberCards: [...targetState.numberCards, card] })
+    }
     const outcome = drawNumberCard(targetState, card)
     return {
       updatedTargetState: outcome.state,
@@ -219,7 +227,9 @@ function applyCardToTarget(
   }
 
   if (isModifierCard(card)) {
-    if (!targetIsActive) return discardOnly(targetState, card)
+    if (!targetIsActive) {
+      return keepOnRow({ ...targetState, modifiers: [...targetState.modifiers, card] })
+    }
     const outcome = drawModifier(targetState, card)
     return {
       updatedTargetState: outcome.state,
@@ -247,10 +257,11 @@ function applyCardToTarget(
   }
 }
 
-function discardOnly(targetState: PlayerRoundState, card: Card): CardApplication {
+/** A card kept on the target's row (no discard, no queue, no pending). */
+function keepOnRow(updatedTargetState: PlayerRoundState): CardApplication {
   return {
-    updatedTargetState: targetState,
-    discardAdditions: [card],
+    updatedTargetState,
+    discardAdditions: [],
     queueAddition: null,
     immediatePendingAction: null,
   }

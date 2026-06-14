@@ -219,6 +219,54 @@ describe('rules: Flip Three', () => {
     expect(g.round?.playerStates[0]?.status).toBe<PlayerStatus>('flip7')
     expect(g.forcedDraws).toBeNull() // stopped early, 2 draws were owed
   })
+
+  it('chains a Flip Three drawn during a Flip Three, then resumes the normal turn order', () => {
+    // P1's turn. P1 draws FT1 and keeps it -> draws 3 cards; the 2nd is a
+    // second Flip Three (FT2) which is queued and resolved AFTER P1's 3.
+    // P1 then sends FT2 to P3, who draws their own 3. Once that settles,
+    // normal play must resume at P2 (the seat after P1).
+    const ft1 = makeFlipThree(0)
+    const ft2 = makeFlipThree(1)
+    const game = inProgressGame(
+      ['active', 'active', 'active'],
+      [ft1, makeNumber(1), ft2, makeNumber(2), makeNumber(3), makeNumber(4), makeNumber(5)],
+      { activePlayerIndex: 0 },
+    )
+
+    // P1 pulls FT1; the play-phase turn already rotates to P2 for later.
+    let g = drawCard(deps, game)
+    expect(g.pendingAction).toEqual({ card: ft1, originIndex: 0 })
+    expect(g.round?.activePlayerIndex).toBe(1)
+
+    g = resolveAction(g, 0) // P1 keeps it for themselves
+    expect(g.forcedDraws).toEqual({ targetIndex: 0, remaining: 3 })
+
+    g = drawCard(deps, g) // forced 1: number
+    g = drawCard(deps, g) // forced 2: FT2 -> queued (counts as a draw)
+    expect(g.actionQueue).toEqual([{ card: ft2, originIndex: 0 }])
+    g = drawCard(deps, g) // forced 3: number -> sequence ends, FT2 drains
+    expect(g.forcedDraws).toBeNull()
+    expect(g.pendingAction).toEqual({ card: ft2, originIndex: 0 })
+
+    // P1 (still the origin) sends the second Flip Three to P3.
+    g = resolveAction(g, 2)
+    expect(g.forcedDraws).toEqual({ targetIndex: 2, remaining: 3 })
+
+    g = drawCard(deps, g) // P3 forced 1
+    g = drawCard(deps, g) // P3 forced 2
+    g = drawCard(deps, g) // P3 forced 3 -> everything settles
+    expect(g.forcedDraws).toBeNull()
+    expect(g.pendingAction).toBeNull()
+    expect(g.actionQueue).toEqual([])
+
+    // Rows: P1 kept 2 numbers (FT2 never lands on a row), P3 got 3, P2 none.
+    expect(g.round?.playerStates[0]?.numberCards).toHaveLength(2)
+    expect(g.round?.playerStates[2]?.numberCards).toHaveLength(3)
+    expect(g.round?.playerStates[1]?.numberCards).toHaveLength(0)
+
+    // Normal order resumes at P2, the seat after P1.
+    expect(g.round?.activePlayerIndex).toBe(1)
+  })
 })
 
 // ---------- SECONDE CHANCE ----------

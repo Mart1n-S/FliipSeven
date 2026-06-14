@@ -234,10 +234,11 @@ describe('drawCard: forced draws (Flip Three)', () => {
     expect(next.round?.playerStates[1]?.status).toBe<PlayerStatus>('busted')
   })
 
-  it('discards subsequent Number cards drawn on a busted target', () => {
-    // remaining = 2 means the target already busted (one bust card
-    // was drawn before this call). A new number must NOT join the
-    // row and must go straight to the discard pile.
+  it('keeps subsequent Number cards on a busted target row (accepted, not discarded)', () => {
+    // remaining = 2 means the target already busted (one bust card was
+    // drawn before this call). The rule says the target must still
+    // "accept" the remaining flipped cards: the number joins the (busted,
+    // 0-scoring) row so it stays visible, and does NOT go to the discard.
     const number = makeNumber(8)
     const game: GameState = {
       ...forcedGame(['active', 'active'], [number], 2, 1, 0, [
@@ -247,12 +248,14 @@ describe('drawCard: forced draws (Flip Three)', () => {
     }
     const next = drawCard(deps, game)
 
-    expect(next.round?.playerStates[1]?.numberCards).toHaveLength(2)
-    expect(next.discard).toContain(number)
+    expect(next.round?.playerStates[1]?.numberCards).toHaveLength(3)
+    expect(next.round?.playerStates[1]?.numberCards).toContain(number)
+    expect(next.round?.playerStates[1]?.status).toBe<PlayerStatus>('busted')
+    expect(next.discard).not.toContain(number)
     expect(next.forcedDraws).toEqual({ targetIndex: 1, remaining: 1 })
   })
 
-  it('discards Modifier cards drawn on a busted target', () => {
+  it('keeps Modifier cards on a busted target row (accepted, not discarded)', () => {
     const modifier = makeModifier('plus-4')
     const game: GameState = forcedGame(['active', 'active'], [modifier], 2, 1, 0, [
       {},
@@ -260,8 +263,8 @@ describe('drawCard: forced draws (Flip Three)', () => {
     ])
     const next = drawCard(deps, game)
 
-    expect(next.round?.playerStates[1]?.modifiers).toEqual([])
-    expect(next.discard).toContain(modifier)
+    expect(next.round?.playerStates[1]?.modifiers).toEqual([modifier])
+    expect(next.discard).not.toContain(modifier)
   })
 
   it('still queues Action cards drawn on a busted target (origin = busted)', () => {

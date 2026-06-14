@@ -80,8 +80,10 @@ const promptByAction = computed<Prompt>(() => {
         </div>
       </header>
 
-      <!-- Scrollable so every seat is reachable even with 18 players. -->
-      <ul class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
+      <!-- Scrollable so every seat is reachable even with 18 players.
+           pt-1 keeps the first item's ring / focus outline from being
+           clipped by the scroll container's top edge. -->
+      <ul class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pt-1 pb-3">
         <li v-for="choice in choices" :key="choice.index">
           <button
             type="button"
