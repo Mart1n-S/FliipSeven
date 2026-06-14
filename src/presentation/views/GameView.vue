@@ -102,7 +102,9 @@ function quit() {
     />
 
     <!-- Transient event banner (bust / flip7 / round-end / etc.) -->
-    <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
+    <Transition name="banner">
+      <EventBanner v-if="lastEvent" :event="lastEvent" @dismiss="dismissEvent" />
+    </Transition>
 
     <!-- Forced draws banner (also takes priority during the deal phase
          so a Flip Three triggered while dealing is visible to the user). -->
@@ -161,26 +163,32 @@ function quit() {
       @stay="stay"
     />
 
-    <TargetSelectorModal
-      v-if="requiresUserChoice && pendingAction"
-      :card="pendingAction.card"
-      :origin-pseudo="pendingOriginPseudo"
-      :choices="choices"
-      @select="resolve"
-    />
+    <Transition name="sheet">
+      <TargetSelectorModal
+        v-if="requiresUserChoice && pendingAction"
+        :card="pendingAction.card"
+        :origin-pseudo="pendingOriginPseudo"
+        :choices="choices"
+        @select="resolve"
+      />
+    </Transition>
 
-    <ConfirmDialog
-      v-if="showQuitConfirm"
-      title="Quitter la partie ?"
-      message="La partie en cours et tous les scores seront perdus."
-      confirm-label="Quitter"
-      cancel-label="Continuer à jouer"
-      destructive
-      @confirm="quit"
-      @cancel="showQuitConfirm = false"
-    />
+    <Transition name="dialog">
+      <ConfirmDialog
+        v-if="showQuitConfirm"
+        title="Quitter la partie ?"
+        message="La partie en cours et tous les scores seront perdus."
+        confirm-label="Quitter"
+        cancel-label="Continuer à jouer"
+        destructive
+        @confirm="quit"
+        @cancel="showQuitConfirm = false"
+      />
+    </Transition>
 
-    <HistoryPanel v-if="showHistory" :entries="history" @close="showHistory = false" />
+    <Transition name="drawer">
+      <HistoryPanel v-if="showHistory" :entries="history" @close="showHistory = false" />
+    </Transition>
   </main>
 
   <main v-else class="flex min-h-full flex-col items-center justify-center gap-4 p-6">
